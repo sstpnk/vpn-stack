@@ -26,7 +26,7 @@ cd vpn-stack
 
 | Переменная | Описание | Пример |
 |------------|----------|--------|
-| WG_HOST | Публичный IP вашего сервера | 45.84.88.253 |
+| WG_HOST | Публичный IP вашего сервера | 123.45.67.89 |
 | WG_EASY_PASSWORD | Пароль для входа в веб-интерфейс | my_secure_password |
 | WG_PORT | Порт WireGuard (по умолчанию 51820) | 51820 |
 | XRAY_PORT | Порт Xray Reality (по умолчанию 443) | 443 |
@@ -38,6 +38,34 @@ cd vpn-stack
 1. Создайте бота у [@BotFather](https://t.me/BotFather) — команда `/newbot`
 2. Скопируйте полученный **токен** в переменную `BOT_TOKEN`
 3. Узнайте свой **username** у [@userinfobot](https://t.me/userinfobot) и укажите в `ALLOWED_USERNAMES`
+
+## Рекомендации для клиента Xray Reality
+
+В конфиге обязательно использовать:
+
+```
+"flow": "xtls-rprx-vision"
+```
+
+Без flow Xray Reality работает в базовом режиме, который уже научились детектить системы DPI в РФ.
+Как выглядит полная строка подключения (VLESS link):
+
+```
+vless://UUID@IP:443?encryption=none&security=reality&type=tcp&flow=xtls-rprx-vision&sni=www.cloudflare.com&pbk=PUBLIC_KEY&sid=SHORT_ID#Name
+```
+В JSON-конфиге (для Sing-box, v2rayNG и др.):
+```
+json
+{
+  "users": [{
+    "id": "UUID",
+    "encryption": "none",
+    "flow": "xtls-rprx-vision"
+  }]
+}
+```
+
+Если у клиента нет поддержки xtls-rprx-vision, то лучше использовать AmneziaWG вместо Xray. Но в актуальных клиентах (Nekobox, v2rayNG, Hiddify, Sing-box) эта опция есть.
 
 ## Структура проекта
 
@@ -82,5 +110,6 @@ vpn-stack/
 
 ## Лицензия
 
-MIT
-```
+MIT License
+
+**Важно:** Данный проект является сборкой сторонних открытых компонентов. Каждый компонент распространяется под своей лицензией (MIT, GPL, MPL и др.). Использование подразумевает соблюдение условий лицензий всех включенных проектов.
