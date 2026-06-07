@@ -1,0 +1,8 @@
+services:
+  bot:
+    image: illmouse/wgeasy-tg-bot:latest
+    container_name: vpn-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    network_mode: host
