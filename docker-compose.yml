@@ -7,8 +7,8 @@ services:
     restart: unless-stopped
     environment:
       - LANG=ru
-      - WG_HOST=${WG_HOST:-YOUR_SERVER_IP}
-      - PASSWORD=${WG_EASY_PASSWORD:-YOUR_PASSWORD}
+      - WG_HOST=${WG_HOST}
+      - PASSWORD=${WG_EASY_PASSWORD}
       - UI_TRAFFIC_STATS=true
     volumes:
       - ./data/wg-easy:/etc/wireguard
@@ -37,10 +37,12 @@ services:
     build: ./bot
     container_name: vpn-bot
     restart: unless-stopped
-    env_file:
-      - ./bot/.env.template
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
+      - WG_EASY_URL=http://wg-easy:51821
+      - WG_EASY_PASSWORD=${WG_EASY_PASSWORD}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    network_mode: host
     depends_on:
       - wg-easy
