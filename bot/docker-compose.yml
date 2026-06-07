@@ -1,0 +1,10 @@
+services:
+  bot:
+    build: .
+    container_name: vpn-bot
+    restart: unless-stopped
+    env_file:
+      - .env.template
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
