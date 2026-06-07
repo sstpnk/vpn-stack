@@ -1,0 +1,11 @@
+# Environment files with secrets
+.env
+bot/.env
+
+# Data directories with generated configs
+data/
+xray-config/config.json
+
+# Python cache
+__pycache__/
+*.pyc
