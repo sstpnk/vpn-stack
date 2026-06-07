@@ -61,6 +61,7 @@ vpn-stack/
 └── xray-config/
 ├── config.template.json
 └── config.json # генерируется автоматически
+```
 
 ## Управление
 
