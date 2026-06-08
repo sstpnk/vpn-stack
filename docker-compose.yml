@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   wg-easy:
     image: ghcr.io/spcfox/amnezia-wg-easy:latest
@@ -31,7 +29,7 @@ services:
     ports:
       - "${XRAY_PORT:-443}:443/tcp"
     volumes:
-      - ./xray-config/config.template.json:/etc/xray/config.json:ro
+      - ./xray-config/config.json:/etc/xray/config.json:ro
 
   vpn-bot:
     build: ./bot
