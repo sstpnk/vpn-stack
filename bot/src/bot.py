@@ -1,7 +1,7 @@
 import html
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from functools import wraps
 from io import BytesIO
 
@@ -46,7 +46,7 @@ PAGE_SIZE = 8
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        ["📋 Peers", "🟢 Active"],
+        ["📋 Peers"],
         ["➕ Create Peer", "📥 Get Config"],
         ["🔍 Search", "🗑 Delete Peer"],
     ],
@@ -65,7 +65,6 @@ PEER_SELECT_TITLE = {
 INLINE_MENU = InlineKeyboardMarkup([
     [
         InlineKeyboardButton("📋 Peers", callback_data="menu:list"),
-        InlineKeyboardButton("🟢 Active", callback_data="menu:active"),
     ],
     [
         InlineKeyboardButton("➕ Create Peer", callback_data="menu:create"),
@@ -151,39 +150,23 @@ def format_peers_text(clients: list) -> str:
     for c in clients:
         status = "🟢" if c.get("enabled") else "🔴"
         name = html.escape(c.get("name", "?"))
-        addr = c.get("address") or "N/A"
+        addr = c.get("ipv4Address") or c.get("address") or "N/A"
         hs = c.get("latestHandshakeAt")
         if hs:
             hs_dt = datetime.fromisoformat(hs.replace("Z", "+00:00"))
             ago = int((datetime.now(timezone.utc) - hs_dt).total_seconds())
-            lines.append(f"{status} <b>{name}</b>  —  {addr}  <i>({ago}s ago)</i>")
+            handshake = f"{ago}s ago"
         else:
-            lines.append(f"{status} <b>{name}</b>  —  {addr}")
-    return "\n".join(lines)
-
-
-def format_active_peers_text(clients: list) -> str:
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=3)
-    lines = []
-    for c in clients:
-        hs = c.get("latestHandshakeAt")
-        if not hs:
-            continue
-        hs_dt = datetime.fromisoformat(hs.replace("Z", "+00:00"))
-        if hs_dt < cutoff:
-            continue
-        ago = int((datetime.now(timezone.utc) - hs_dt).total_seconds())
-        name = html.escape(c.get("name", "?"))
-        addr = c.get("ipv4Address") or c.get("address", "N/A")
-        rx = c.get("transferRx", 0)
-        tx = c.get("transferTx", 0)
+            handshake = "never"
+        rx = c.get("transferRx") or 0
+        tx = c.get("transferTx") or 0
         rx_str = f"{rx/1024/1024:.1f} MB" if rx > 1024*1024 else f"{rx/1024:.1f} KB"
         tx_str = f"{tx/1024/1024:.1f} MB" if tx > 1024*1024 else f"{tx/1024:.1f} KB"
         lines.append(
-            f"🟢 <b>{name}</b>  —  {addr}  <i>({ago}s ago)</i>\n"
+            f"{status} <b>{name}</b>  —  {addr}  <i>({handshake})</i>\n"
             f"⬇️ {rx_str}  ⬆️ {tx_str}"
         )
-    return "\n\n".join(lines) if lines else ""
+    return "\n\n".join(lines)
 
 
 async def _show_peer_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, action: str):
@@ -226,18 +209,6 @@ async def list_peers(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No peers found.")
         return
     await update.message.reply_text(format_peers_text(clients), parse_mode="HTML")
-
-
-@require_access
-async def active_peers(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        clients = wg.list_clients()
-    except Exception as e:
-        await update.message.reply_text(f"API error: {e}")
-        return
-
-    text = format_active_peers_text(clients)
-    await update.message.reply_text(text or "No peers active in the last 3 minutes.", parse_mode="HTML")
 
 
 @require_access
@@ -423,15 +394,6 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text = format_peers_text(clients) if clients else "No peers found."
             await query.message.reply_text(text, parse_mode="HTML")
 
-        elif action == "active":
-            try:
-                clients = wg.list_clients()
-            except Exception as e:
-                await query.message.reply_text(f"API error: {e}")
-                return
-            text = format_active_peers_text(clients)
-            await query.message.reply_text(text or "No peers active in the last 3 minutes.", parse_mode="HTML")
-
         elif action == "create":
             await query.message.reply_text("Use /create &lt;name&gt; to create a new peer.", parse_mode="HTML")
 
@@ -523,7 +485,7 @@ def main():
     token = os.environ["BOT_TOKEN"]
     app = Application.builder().token(token).build()
 
-    kb_buttons = ["📋 Peers", "🟢 Active", "➕ Create Peer", "📥 Get Config", "🔍 Search", "🗑 Delete Peer"]
+    kb_buttons = ["📋 Peers", "➕ Create Peer", "📥 Get Config", "🔍 Search", "🗑 Delete Peer"]
     kb_filter = filters.Text(kb_buttons)
     cancel_cb = CallbackQueryHandler(cancel_from_button, pattern="^cancel_conv$")
 
@@ -562,7 +524,6 @@ def main():
     app.add_handler(CommandHandler("menu", menu))
     app.add_handler(conv_handler)
     app.add_handler(MessageHandler(filters.Text(["📋 Peers"]), list_peers))
-    app.add_handler(MessageHandler(filters.Text(["🟢 Active"]), active_peers))
     app.add_handler(MessageHandler(filters.Text(["📥 Get Config"]), config_menu))
     app.add_handler(MessageHandler(filters.Text(["🗑 Delete Peer"]), delete_menu))
     app.add_handler(CallbackQueryHandler(on_callback))
