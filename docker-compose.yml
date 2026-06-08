@@ -42,6 +42,21 @@ services:
       - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
       - WG_EASY_URL=http://wg-easy:51821
       - WG_EASY_PASSWORD=${WG_EASY_PASSWORD}
+      - WG_MTU=${WG_MTU:-1280}
+      - AMNEZIA_JC=${AMNEZIA_JC:-9}
+      - AMNEZIA_JMIN=${AMNEZIA_JMIN:-50}
+      - AMNEZIA_JMAX=${AMNEZIA_JMAX:-1000}
+      - AMNEZIA_S1=${AMNEZIA_S1:-33}
+      - AMNEZIA_S2=${AMNEZIA_S2:-18}
+      - AMNEZIA_H1=${AMNEZIA_H1:-1556852380}
+      - AMNEZIA_H2=${AMNEZIA_H2:-854724827}
+      - AMNEZIA_H3=${AMNEZIA_H3:-1373297535}
+      - AMNEZIA_H4=${AMNEZIA_H4:-1443617385}
+      - AMNEZIA_I1=${AMNEZIA_I1:-4}
+      - AMNEZIA_I2=${AMNEZIA_I2:-4}
+      - AMNEZIA_I3=${AMNEZIA_I3:-3}
+      - AMNEZIA_I4=${AMNEZIA_I4:-0}
+      - AMNEZIA_I5=${AMNEZIA_I5:-0}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
