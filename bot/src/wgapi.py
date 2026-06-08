@@ -3,15 +3,6 @@ import requests
 
 
 AMNEZIA_INTERFACE_DEFAULTS = (
-    ("Jc", "AMNEZIA_JC", "9"),
-    ("Jmin", "AMNEZIA_JMIN", "50"),
-    ("Jmax", "AMNEZIA_JMAX", "1000"),
-    ("S1", "AMNEZIA_S1", "33"),
-    ("S2", "AMNEZIA_S2", "18"),
-    ("H1", "AMNEZIA_H1", "1556852380"),
-    ("H2", "AMNEZIA_H2", "854724827"),
-    ("H3", "AMNEZIA_H3", "1373297535"),
-    ("H4", "AMNEZIA_H4", "1443617385"),
     ("I1", "AMNEZIA_I1", "4"),
     ("I2", "AMNEZIA_I2", "4"),
     ("I3", "AMNEZIA_I3", "3"),
