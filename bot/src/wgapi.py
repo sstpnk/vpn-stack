@@ -2,91 +2,6 @@ import os
 import requests
 
 
-AMNEZIA_INTERFACE_DEFAULTS = (
-    ("I1", "AMNEZIA_I1", "4"),
-    ("I2", "AMNEZIA_I2", "4"),
-    ("I3", "AMNEZIA_I3", "3"),
-    ("I4", "AMNEZIA_I4", "0"),
-    ("I5", "AMNEZIA_I5", "0"),
-    ("MTU", "WG_MTU", "1280"),
-)
-
-SPLIT_TUNNEL_ALLOWED_IPS = (
-    "0.0.0.0/5, 8.0.0.0/7, 11.0.0.0/8, 12.0.0.0/6, "
-    "16.0.0.0/4, 32.0.0.0/3, 64.0.0.0/2, 128.0.0.0/3, "
-    "160.0.0.0/5, 168.0.0.0/6, 172.0.0.0/12, 172.32.0.0/11, "
-    "172.64.0.0/10, 172.128.0.0/9, 173.0.0.0/8, 174.0.0.0/7, "
-    "176.0.0.0/4, 192.0.0.0/9, 192.128.0.0/11, 192.160.0.0/13, "
-    "192.169.0.0/16, 192.170.0.0/15, 192.172.0.0/14, "
-    "192.176.0.0/12, 192.192.0.0/10, 193.0.0.0/8, 194.0.0.0/7, "
-    "196.0.0.0/6, 200.0.0.0/5, 208.0.0.0/4, 8.8.8.8/32, 1.1.1.1/32"
-)
-
-
-def _patch_client_config(config: str) -> str:
-    newline = "\r\n" if "\r\n" in config else "\n"
-    has_trailing_newline = config.endswith(("\r", "\n"))
-    lines = config.splitlines()
-
-    interface_values = {
-        key.lower(): (key, os.getenv(env_name, default))
-        for key, env_name, default in AMNEZIA_INTERFACE_DEFAULTS
-    }
-    section_values = {
-        "interface": interface_values,
-        "peer": {
-            "allowedips": ("AllowedIPs", SPLIT_TUNNEL_ALLOWED_IPS),
-        },
-    }
-
-    result = []
-    current_section = None
-    seen_keys = set()
-
-    def add_missing_values():
-        values = section_values.get(current_section)
-        if not values:
-            return
-
-        trailing_blank_lines = []
-        while result and not result[-1].strip():
-            trailing_blank_lines.append(result.pop())
-
-        for normalized_key, (key, value) in values.items():
-            if normalized_key not in seen_keys:
-                result.append(f"{key} = {value}")
-
-        result.extend(reversed(trailing_blank_lines))
-
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            add_missing_values()
-            current_section = stripped[1:-1].strip().lower()
-            seen_keys = set()
-            result.append(line)
-            continue
-
-        values = section_values.get(current_section)
-        if values and "=" in line and not stripped.startswith(("#", ";")):
-            key = line.split("=", 1)[0].strip().lower()
-            replacement = values.get(key)
-            if replacement:
-                if key not in seen_keys:
-                    canonical_key, value = replacement
-                    result.append(f"{canonical_key} = {value}")
-                    seen_keys.add(key)
-                continue
-
-        result.append(line)
-
-    add_missing_values()
-    patched = newline.join(result)
-    if has_trailing_newline:
-        patched += newline
-    return patched
-
-
 class WGEasyAPI:
     def __init__(self):
         self.base_url = os.environ["WG_EASY_URL"].rstrip("/")
@@ -145,5 +60,4 @@ class WGEasyAPI:
         filename = f"peer-{client_id}.conf"
         if 'filename="' in cd:
             filename = cd.split('filename="')[1].rstrip('"')
-        config = _patch_client_config(resp.content.decode("utf-8"))
-        return config.encode("utf-8"), filename
+        return resp.content, filename

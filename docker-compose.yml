@@ -1,17 +1,35 @@
 services:
   wg-easy:
-    image: ghcr.io/spcfox/amnezia-wg-easy:latest
+    build: ./awg-easy
+    image: vpn-stack/amnezia-wg-easy:local
     container_name: vpn-awg-easy
     restart: unless-stopped
     environment:
       - LANG=ru
       - WG_HOST=${WG_HOST}
+      - WG_PORT=${WG_PORT:-51820}
+      - WG_MTU=${WG_MTU:-1280}
+      - WG_ALLOWED_IPS=${WG_ALLOWED_IPS:-}
       - PASSWORD=${WG_EASY_PASSWORD}
       - UI_TRAFFIC_STATS=true
+      - JC=${AMNEZIA_JC:-9}
+      - JMIN=${AMNEZIA_JMIN:-50}
+      - JMAX=${AMNEZIA_JMAX:-1000}
+      - S1=${AMNEZIA_S1:-33}
+      - S2=${AMNEZIA_S2:-18}
+      - H1=${AMNEZIA_H1:-1556852380}
+      - H2=${AMNEZIA_H2:-854724827}
+      - H3=${AMNEZIA_H3:-1373297535}
+      - H4=${AMNEZIA_H4:-1443617385}
+      - I1=${AMNEZIA_I1:-4}
+      - I2=${AMNEZIA_I2:-4}
+      - I3=${AMNEZIA_I3:-3}
+      - I4=${AMNEZIA_I4:-0}
+      - I5=${AMNEZIA_I5:-0}
     volumes:
       - ./data/wg-easy:/etc/wireguard
     ports:
-      - "${WG_PORT:-51820}:51820/udp"
+      - "${WG_PORT:-51820}:${WG_PORT:-51820}/udp"
       - "51821:51821/tcp"
     cap_add:
       - NET_ADMIN
@@ -40,21 +58,6 @@ services:
       - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
       - WG_EASY_URL=http://wg-easy:51821
       - WG_EASY_PASSWORD=${WG_EASY_PASSWORD}
-      - WG_MTU=${WG_MTU:-1280}
-      - AMNEZIA_JC=${AMNEZIA_JC:-9}
-      - AMNEZIA_JMIN=${AMNEZIA_JMIN:-50}
-      - AMNEZIA_JMAX=${AMNEZIA_JMAX:-1000}
-      - AMNEZIA_S1=${AMNEZIA_S1:-33}
-      - AMNEZIA_S2=${AMNEZIA_S2:-18}
-      - AMNEZIA_H1=${AMNEZIA_H1:-1556852380}
-      - AMNEZIA_H2=${AMNEZIA_H2:-854724827}
-      - AMNEZIA_H3=${AMNEZIA_H3:-1373297535}
-      - AMNEZIA_H4=${AMNEZIA_H4:-1443617385}
-      - AMNEZIA_I1=${AMNEZIA_I1:-4}
-      - AMNEZIA_I2=${AMNEZIA_I2:-4}
-      - AMNEZIA_I3=${AMNEZIA_I3:-3}
-      - AMNEZIA_I4=${AMNEZIA_I4:-0}
-      - AMNEZIA_I5=${AMNEZIA_I5:-0}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
