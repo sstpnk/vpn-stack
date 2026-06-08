@@ -151,8 +151,14 @@ def format_peers_text(clients: list) -> str:
     for c in clients:
         status = "🟢" if c.get("enabled") else "🔴"
         name = html.escape(c.get("name", "?"))
-        addr = c.get("ipv4Address") or "N/A"
-        lines.append(f"{status} <b>{name}</b>  —  {addr}")
+        addr = c.get("address") or "N/A"
+        hs = c.get("latestHandshakeAt")
+        if hs:
+            hs_dt = datetime.fromisoformat(hs.replace("Z", "+00:00"))
+            ago = int((datetime.now(timezone.utc) - hs_dt).total_seconds())
+            lines.append(f"{status} <b>{name}</b>  —  {addr}  <i>({ago}s ago)</i>")
+        else:
+            lines.append(f"{status} <b>{name}</b>  —  {addr}")
     return "\n".join(lines)
 
 
@@ -168,9 +174,16 @@ def format_active_peers_text(clients: list) -> str:
             continue
         ago = int((datetime.now(timezone.utc) - hs_dt).total_seconds())
         name = html.escape(c.get("name", "?"))
-        addr = c.get("ipv4Address") or "N/A"
-        lines.append(f"🟢 <b>{name}</b>  —  {addr}  <i>({ago}s ago)</i>")
-    return "\n".join(lines) if lines else ""
+        addr = c.get("ipv4Address") or c.get("address", "N/A")
+        rx = c.get("transferRx", 0)
+        tx = c.get("transferTx", 0)
+        rx_str = f"{rx/1024/1024:.1f} MB" if rx > 1024*1024 else f"{rx/1024:.1f} KB"
+        tx_str = f"{tx/1024/1024:.1f} MB" if tx > 1024*1024 else f"{tx/1024:.1f} KB"
+        lines.append(
+            f"🟢 <b>{name}</b>  —  {addr}  <i>({ago}s ago)</i>\n"
+            f"⬇️ {rx_str}  ⬆️ {tx_str}"
+        )
+    return "\n\n".join(lines) if lines else ""
 
 
 async def _show_peer_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, action: str):
