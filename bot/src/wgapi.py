@@ -129,27 +129,27 @@ class WGEasyAPI:
         return resp
 
     def list_clients(self):
-        return self._request("GET", "/api/client").json()
+        return self._request("GET", "/api/wireguard/client").json()
 
     def create_client(self, name: str):
-        return self._request("POST", "/api/client", json={"name": name, "expiresAt": None}).json()
+        return self._request("POST", "/api/wireguard/client", json={"name": name, "expiresAt": None}).json()
 
     def delete_client(self, client_id):
-        return self._request("DELETE", f"/api/client/{client_id}").json()
+        return self._request("DELETE", f"/api/wireguard/client/{client_id}").json()
 
     def get_client(self, client_id) -> dict:
-        return self._request("GET", f"/api/client/{client_id}").json()
+        return self._request("GET", f"/api/wireguard/client/{client_id}").json()
 
     def rename_client(self, client_id, new_name: str):
         c = self.get_client(client_id)
         skip = {"id", "userId", "interfaceId", "publicKey", "createdAt", "updatedAt", "endpoint"}
         payload = {k: v for k, v in c.items() if k not in skip}
         payload["name"] = new_name
-        return self._request("POST", f"/api/client/{client_id}", json=payload).json()
+        return self._request("POST", f"/api/wireguard/client/{client_id}", json=payload).json()
 
     def get_client_config(self, client_id) -> tuple[bytes, str]:
         """Returns (config_bytes, filename)."""
-        resp = self._request("GET", f"/api/client/{client_id}/configuration")
+        resp = self._request("GET", f"/api/wireguard/client/{client_id}/configuration")
         cd = resp.headers.get("Content-Disposition", "")
         filename = f"peer-{client_id}.conf"
         if 'filename="' in cd:

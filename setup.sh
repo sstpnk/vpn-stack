@@ -75,7 +75,7 @@ mkdir -p data/wg-easy
 
 # Start the stack
 echo -e "${YELLOW}Starting VPN stack...${NC}"
-docker compose up -d --build
+DOCKER_COMPOSE_EXPERIMENTAL=false docker compose up -d --build
 
 echo -e "${GREEN}=== Setup complete ===${NC}"
 echo "Web UI: http://$WG_HOST:51821"
