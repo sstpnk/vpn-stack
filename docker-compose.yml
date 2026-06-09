@@ -10,22 +10,23 @@ services:
       - WG_PORT=${WG_PORT:-51820}
       - WG_MTU=${WG_MTU:-1280}
       - WG_ALLOWED_IPS=${WG_ALLOWED_IPS:-}
+      - WG_PERSISTENT_KEEPALIVE=${WG_PERSISTENT_KEEPALIVE:-25}
       - PASSWORD=${WG_EASY_PASSWORD}
       - UI_TRAFFIC_STATS=true
-      - JC=${AMNEZIA_JC:-9}
-      - JMIN=${AMNEZIA_JMIN:-50}
-      - JMAX=${AMNEZIA_JMAX:-1000}
-      - S1=${AMNEZIA_S1:-33}
-      - S2=${AMNEZIA_S2:-18}
-      - H1=${AMNEZIA_H1:-1556852380}
-      - H2=${AMNEZIA_H2:-854724827}
-      - H3=${AMNEZIA_H3:-1373297535}
-      - H4=${AMNEZIA_H4:-1443617385}
-      - I1=${AMNEZIA_I1:-4}
-      - I2=${AMNEZIA_I2:-4}
-      - I3=${AMNEZIA_I3:-3}
-      - I4=${AMNEZIA_I4:-0}
-      - I5=${AMNEZIA_I5:-0}
+      - JC=${AMNEZIA_JC:-10}
+      - JMIN=${AMNEZIA_JMIN:-64}
+      - JMAX=${AMNEZIA_JMAX:-200}
+      - S1=${AMNEZIA_S1:-64}
+      - S2=${AMNEZIA_S2:-64}
+      - H1=${AMNEZIA_H1:-1000-12999}
+      - H2=${AMNEZIA_H2:-13000-24999}
+      - H3=${AMNEZIA_H3:-25000-36999}
+      - H4=${AMNEZIA_H4:-37000-50000}
+      - I1=${AMNEZIA_I1:-<b 0x160301>}
+      - I2=${AMNEZIA_I2:-<r 3><b 0x0303><r 32>}
+      - I3=${AMNEZIA_I3:-<b 0x00><r 5>}
+      - I4=${AMNEZIA_I4:-<r 40>}
+      - I5=${AMNEZIA_I5:-<b 0xC0000000><r 8><b 0x04><r 100>}
     volumes:
       - ./data/wg-easy:/etc/wireguard
     ports:

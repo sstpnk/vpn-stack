@@ -12,7 +12,7 @@ module.exports.WG_DEVICE = process.env.WG_DEVICE || 'eth0';
 module.exports.WG_HOST = process.env.WG_HOST;
 module.exports.WG_PORT = process.env.WG_PORT || '51820';
 module.exports.WG_MTU = process.env.WG_MTU || '1280';
-module.exports.WG_PERSISTENT_KEEPALIVE = process.env.WG_PERSISTENT_KEEPALIVE || '0';
+module.exports.WG_PERSISTENT_KEEPALIVE = process.env.WG_PERSISTENT_KEEPALIVE || '25';
 module.exports.WG_DEFAULT_ADDRESS = process.env.WG_DEFAULT_ADDRESS || '10.8.0.x';
 module.exports.WG_DEFAULT_DNS = typeof process.env.WG_DEFAULT_DNS === 'string'
   ? process.env.WG_DEFAULT_DNS
@@ -71,21 +71,17 @@ module.exports.LANG = process.env.LANGUAGE || 'en';
 module.exports.UI_TRAFFIC_STATS = process.env.UI_TRAFFIC_STATS || 'false';
 module.exports.UI_CHART_TYPE = process.env.UI_CHART_TYPE || 0;
 
-const getRandomInt = (min, max) => min + Math.floor(Math.random() * (max - min));
-const getRandomJunkSize = () => getRandomInt(15, 150);
-const getRandomHeader = () => getRandomInt(1, 2_147_483_647);
-
-module.exports.JC = process.env.JC || getRandomInt(3, 10);
-module.exports.JMIN = process.env.JMIN || 50;
-module.exports.JMAX = process.env.JMAX || 1000;
-module.exports.S1 = process.env.S1 || getRandomJunkSize();
-module.exports.S2 = process.env.S2 || getRandomJunkSize();
-module.exports.H1 = process.env.H1 || getRandomHeader();
-module.exports.H2 = process.env.H2 || getRandomHeader();
-module.exports.H3 = process.env.H3 || getRandomHeader();
-module.exports.H4 = process.env.H4 || getRandomHeader();
-module.exports.I1 = process.env.I1 || 4;
-module.exports.I2 = process.env.I2 || 4;
-module.exports.I3 = process.env.I3 || 3;
-module.exports.I4 = process.env.I4 || 0;
-module.exports.I5 = process.env.I5 || 0;
+module.exports.JC = process.env.JC || 10;
+module.exports.JMIN = process.env.JMIN || 64;
+module.exports.JMAX = process.env.JMAX || 200;
+module.exports.S1 = process.env.S1 || 64;
+module.exports.S2 = process.env.S2 || 64;
+module.exports.H1 = process.env.H1 || '1000-12999';
+module.exports.H2 = process.env.H2 || '13000-24999';
+module.exports.H3 = process.env.H3 || '25000-36999';
+module.exports.H4 = process.env.H4 || '37000-50000';
+module.exports.I1 = process.env.I1 || '<b 0x160301>';
+module.exports.I2 = process.env.I2 || '<r 3><b 0x0303><r 32>';
+module.exports.I3 = process.env.I3 || '<b 0x00><r 5>';
+module.exports.I4 = process.env.I4 || '<r 40>';
+module.exports.I5 = process.env.I5 || '<b 0xC0000000><r 8><b 0x04><r 100>';
