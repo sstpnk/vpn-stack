@@ -148,25 +148,26 @@ WG_HOST=203.0.113.10
 WG_EASY_PASSWORD=replace_with_a_long_random_password
 WG_PORT=51820
 WG_MTU=1280
+WG_PERSISTENT_KEEPALIVE=25
 # Пустое значение использует split-маршруты из локального fork-а
 WG_ALLOWED_IPS=
 XRAY_PORT=443
 
 # Параметры AmneziaWG
-AMNEZIA_JC=9
-AMNEZIA_JMIN=50
-AMNEZIA_JMAX=1000
-AMNEZIA_S1=33
-AMNEZIA_S2=18
-AMNEZIA_H1=1556852380
-AMNEZIA_H2=854724827
-AMNEZIA_H3=1373297535
-AMNEZIA_H4=1443617385
-AMNEZIA_I1=4
-AMNEZIA_I2=4
-AMNEZIA_I3=3
-AMNEZIA_I4=0
-AMNEZIA_I5=0
+AMNEZIA_JC=10
+AMNEZIA_JMIN=64
+AMNEZIA_JMAX=200
+AMNEZIA_S1=64
+AMNEZIA_S2=64
+AMNEZIA_H1=1000-12999
+AMNEZIA_H2=13000-24999
+AMNEZIA_H3=25000-36999
+AMNEZIA_H4=37000-50000
+AMNEZIA_I1='<b 0x160301>'
+AMNEZIA_I2='<r 3><b 0x0303><r 32>'
+AMNEZIA_I3='<b 0x00><r 5>'
+AMNEZIA_I4='<r 40>'
+AMNEZIA_I5='<b 0xC0000000><r 8><b 0x04><r 100>'
 
 # Telegram-бот
 BOT_TOKEN=123456789:replace_with_botfather_token
@@ -190,14 +191,15 @@ docker compose up -d --build --force-recreate
 | `WG_EASY_PASSWORD` | нет | пароль веб-интерфейса |
 | `WG_PORT` | `51820` | внешний UDP-порт AmneziaWG; после изменения проверьте `Endpoint` |
 | `WG_MTU` | `1280` | MTU, добавляемый сервером в клиентский конфиг |
+| `WG_PERSISTENT_KEEPALIVE` | `25` | интервал keepalive клиента в секундах |
 | `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
 | `XRAY_PORT` | `443` | внешний TCP-порт Xray Reality |
-| `AMNEZIA_JC` | `9` | количество мусорных пакетов |
-| `AMNEZIA_JMIN` | `50` | минимальный размер мусорного пакета |
-| `AMNEZIA_JMAX` | `1000` | максимальный размер мусорного пакета |
-| `AMNEZIA_S1`, `AMNEZIA_S2` | `33`, `18` | размеры изменённых handshake-пакетов |
-| `AMNEZIA_H1`...`AMNEZIA_H4` | см. пример | заголовки handshake/transport-пакетов |
-| `AMNEZIA_I1`...`AMNEZIA_I5` | `4`, `4`, `3`, `0`, `0` | дополнительные параметры обфускации |
+| `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
+| `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
+| `AMNEZIA_JMAX` | `200` | максимальный размер мусорного пакета в байтах |
+| `AMNEZIA_S1`, `AMNEZIA_S2` | `64`, `64` | padding пакетов Init и Response |
+| `AMNEZIA_H1`...`AMNEZIA_H4` | см. пример | непересекающиеся диапазоны заголовков пакетов |
+| `AMNEZIA_I1`...`AMNEZIA_I5` | см. пример | CPS-пакеты с байтами и случайными фрагментами |
 | `BOT_TOKEN` | пусто | токен, полученный у `@BotFather` |
 | `ALLOWED_USERNAMES` | пусто | Telegram username без `@`; несколько имён через запятую |
 
@@ -205,6 +207,9 @@ docker compose up -d --build --force-recreate
 `docker-compose.yml` и добавляет их непосредственно при генерации `.conf`.
 Поэтому веб-интерфейс, QR-код и Telegram-бот возвращают одинаковую
 конфигурацию с `J*`, `S*`, `H*`, `I1`–`I5`, `MTU` и split `AllowedIPs`.
+Скачиваемый файл содержит комментарии, поясняющие назначение параметров.
+Директива `Init_Packet_Delay` не добавляется: официальные AmneziaWG tools и
+клиенты её не поддерживают.
 
 Параметры сервера сохраняются в `data/wg-easy/wg0.json` при первом запуске.
 Если изменить `Jc`, `Jmin`, `Jmax`, `S1`, `S2` или `H1`–`H4` для уже
@@ -250,21 +255,27 @@ docker compose logs -f vpn-bot
 PrivateKey = CLIENT_PRIVATE_KEY
 Address = 10.8.0.2/24
 DNS = 1.1.1.1
-Jc = 9
-Jmin = 50
-Jmax = 1000
-S1 = 33
-S2 = 18
-H1 = 1556852380
-H2 = 854724827
-H3 = 1373297535
-H4 = 1443617385
-I1 = 4
-I2 = 4
-I3 = 3
-I4 = 0
-I5 = 0
 MTU = 1280
+
+# --- Транспортная маскировка ---
+Jc = 10
+Jmin = 64
+Jmax = 200
+S1 = 64
+S2 = 64
+
+# --- Динамические заголовки пакетов ---
+H1 = 1000-12999
+H2 = 13000-24999
+H3 = 25000-36999
+H4 = 37000-50000
+
+# --- Маскировочные CPS-пакеты ---
+I1 = <b 0x160301>
+I2 = <r 3><b 0x0303><r 32>
+I3 = <b 0x00><r 5>
+I4 = <r 40>
+I5 = <b 0xC0000000><r 8><b 0x04><r 100>
 
 [Peer]
 PublicKey = SERVER_PUBLIC_KEY

@@ -235,20 +235,38 @@ PrivateKey = ${client.privateKey ? `${client.privateKey}` : 'REPLACE_ME'}
 Address = ${client.address}
 ${WG_DEFAULT_DNS ? `DNS = ${WG_DEFAULT_DNS}\n` : ''}\
 ${WG_MTU ? `MTU = ${WG_MTU}\n` : ''}\
+
+# --- Транспортная маскировка ---
+# Jc: количество мусорных пакетов перед каждым handshake.
 Jc = ${config.server.jc}
+# Jmin/Jmax: минимальный и максимальный размер мусорного пакета в байтах.
+# Это размеры пакетов, а не задержка в миллисекундах.
 Jmin = ${config.server.jmin}
 Jmax = ${config.server.jmax}
+# S1/S2: случайное дополнение пакетов инициализации и ответа handshake.
 S1 = ${config.server.s1}
 S2 = ${config.server.s2}
+
+# --- Динамические заголовки пакетов ---
+# H1-H4: значения или диапазоны заголовков Init, Response, Cookie и Transport.
+# Сервер и клиент должны использовать одинаковые значения; диапазоны не пересекаются.
 H1 = ${config.server.h1}
 H2 = ${config.server.h2}
 H3 = ${config.server.h3}
 H4 = ${config.server.h4}
+
+# --- Маскировочные CPS-пакеты ---
+# I1-I5 отправляются по порядку перед реальным WireGuard handshake.
+# <b 0x...> добавляет статические байты, <r N> — N случайных байтов.
+# Значения ниже имитируют начало TLS/QUIC-подобного UDP-обмена.
 I1 = ${I1}
 I2 = ${I2}
 I3 = ${I3}
 I4 = ${I4}
 I5 = ${I5}
+
+# Init_Packet_Delay намеренно отсутствует: официальные AmneziaWG tools
+# и клиенты не поддерживают такую директиву.
 
 [Peer]
 PublicKey = ${config.server.publicKey}
