@@ -238,21 +238,17 @@ async def create_receive_name(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     try:
         result = wg.create_client(name)
-        client_id = result.get("clientId")
-        if client_id:
-            config_data, filename = wg.get_client_config(client_id)
-            await update.message.reply_document(
-                document=BytesIO(config_data),
-                filename=filename,
-                caption=f"✅ Peer <b>{html.escape(name)}</b> created!" + AMNEZIA_LINKS,
-                parse_mode="HTML",
-            )
-        else:
-            await update.message.reply_text(
-                f"✅ Peer <b>{html.escape(name)}</b> created!" + AMNEZIA_LINKS,
-                parse_mode="HTML",
-                disable_web_page_preview=True,
-            )
+        client_id = result.get("id") or result.get("clientId")
+        if not client_id:
+            raise RuntimeError("Peer was created, but its ID was not returned")
+
+        config_data, filename = wg.get_client_config(client_id)
+        await update.message.reply_document(
+            document=BytesIO(config_data),
+            filename=filename,
+            caption=f"✅ Peer <b>{html.escape(name)}</b> created!",
+            parse_mode="HTML",
+        )
     except Exception as e:
         await update.message.reply_text(f"API error: {e}")
 
