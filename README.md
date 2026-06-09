@@ -152,6 +152,9 @@ WG_PERSISTENT_KEEPALIVE=25
 # Пустое значение использует split-маршруты из локального fork-а
 WG_ALLOWED_IPS=
 XRAY_PORT=443
+XRAY_PUBLIC_HOST=
+XRAY_SERVER_NAME=zoom.us
+XRAY_FINGERPRINT=randomized
 
 # Параметры AmneziaWG
 AMNEZIA_JC=10
@@ -194,6 +197,9 @@ docker compose up -d --build --force-recreate
 | `WG_PERSISTENT_KEEPALIVE` | `25` | интервал keepalive клиента в секундах |
 | `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
 | `XRAY_PORT` | `443` | внешний TCP-порт Xray Reality |
+| `XRAY_PUBLIC_HOST` | `WG_HOST` | адрес, используемый в VLESS-ссылках |
+| `XRAY_SERVER_NAME` | `zoom.us` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
+| `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint в клиентских VLESS-профилях |
 | `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
 | `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
 | `AMNEZIA_JMAX` | `200` | максимальный размер мусорного пакета в байтах |
@@ -230,8 +236,19 @@ docker compose up -d --build vpn-bot
 docker compose logs -f vpn-bot
 ```
 
-После запуска отправьте боту `/start`. Через меню можно создать peer,
-скачать его конфиг, посмотреть список со статистикой или удалить peer.
+После запуска отправьте боту `/start`. Через меню можно управлять peer-ами
+AmneziaWG и VLESS Reality-подключениями.
+
+Команды VLESS:
+
+| Команда | Действие |
+|---------|----------|
+| `/vless_create [имя]` | создать подключение; без имени бот запросит его отдельно |
+| `/vless_list` | показать существующие VLESS-ссылки |
+| `/vless_delete` | выбрать и удалить подключение |
+
+При создании бот отправляет стандартную `vless://` ссылку и отдельный
+клиентский JSON для Xray/NekoBox с рекомендуемыми параметрами Mux.
 
 ## Создание клиентской конфигурации
 
@@ -470,18 +487,41 @@ docker compose up -d --build --force-recreate wg-easy
 Xray Reality работает как резервный транспорт. Клиент должен поддерживать
 VLESS Reality и flow `xtls-rprx-vision`.
 
-Пример ссылки:
+Новая установка использует `zoom.us:443` как Reality target и разрешает SNI
+`zoom.us` и `www.zoom.us`. Для уже существующей установки бот читает
+фактический `serverNames` из `xray-config/config.json` и использует разрешённое
+значение в ссылке. Это не ломает ранее созданные подключения при обновлении
+бота.
+
+`zoom.us` является настраиваемым default, а не универсально лучшим target.
+Официальная рекомендация Xray — выбирать доступный TLS-сайт по возможности в
+том же ASN, что и VPS. Не меняйте `target/serverNames` у работающего сервера без
+плана обновления существующих клиентов.
+
+Пример генерируемой ссылки:
 
 ```text
-vless://UUID@SERVER_IP:443?encryption=none&security=reality&type=tcp&flow=xtls-rprx-vision&sni=www.cloudflare.com&pbk=PUBLIC_KEY&sid=SHORT_ID#vpn-stack
+vless://UUID@SERVER_IP:443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=zoom.us&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2FSHORT_ID#NAME
 ```
 
-`UUID`, приватный ключ и `SHORT_ID` находятся в
-`xray-config/config.json`, созданном при установке. Клиенту нужен публичный
-ключ из той же пары X25519; он не хранится в серверном JSON. Не используйте
-буквальные значения из примера. Текущий `setup.sh` не формирует готовую
-клиентскую VLESS-ссылку, поэтому перед использованием резервного транспорта
-проверьте пару ключей и соберите профиль отдельно.
+Для каждого подключения бот:
+
+- создаёт отдельный UUID с flow `xtls-rprx-vision`;
+- создаёт отдельный 8-символьный hex `shortId`;
+- вычисляет public key из существующего Reality private key, не меняя пару;
+- формирует ссылку с согласованным SNI;
+- создаёт отдельный `spiderX` в формате `/<shortId>`;
+- формирует клиентский JSON с `concurrency=8`, `xudpConcurrency=8` и
+  `xudpProxyUDP443=reject`.
+
+Перед изменением бот сохраняет старый `config.json`, проверяет новый командой
+`xray run -test`, атомарно заменяет файл и перезапускает только контейнер
+`vpn-xray`. Если проверка или запуск не удались, прежняя конфигурация
+восстанавливается.
+
+Поле `mux` не входит в формат стандартной VLESS-ссылки. Поэтому оно содержится
+только в отдельном JSON-файле, который бот отправляет при создании подключения.
+Повторный запуск `setup.sh` сохраняет существующие Reality-ключи и VLESS-клиентов.
 
 ## Структура проекта
 

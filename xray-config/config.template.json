@@ -4,12 +4,15 @@
   },
   "inbounds": [
     {
+      "listen": "0.0.0.0",
       "port": 443,
       "protocol": "vless",
       "settings": {
         "clients": [
           {
-            "id": "YOUR_UUID"
+            "id": "YOUR_UUID",
+            "flow": "xtls-rprx-vision",
+            "email": "default"
           }
         ],
         "decryption": "none"
@@ -19,16 +22,25 @@
         "security": "reality",
         "realitySettings": {
           "show": false,
-          "dest": "www.cloudflare.com:443",
+          "target": "zoom.us:443",
           "xver": 0,
           "serverNames": [
-            "www.cloudflare.com"
+            "zoom.us",
+            "www.zoom.us"
           ],
           "privateKey": "YOUR_PRIVATE_KEY",
           "shortIds": [
             "YOUR_SHORT_ID"
           ]
         }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
       }
     }
   ],

@@ -56,18 +56,18 @@ else
     source .env
 fi
 
-# Generate Xray keys
-echo -e "${YELLOW}Generating Xray keys...${NC}"
-PRIVATE_KEY=$(docker run --rm teddysun/xray:latest xray x25519 | grep PrivateKey | awk '{print $2}')
-PUBLIC_KEY=$(docker run --rm teddysun/xray:latest xray x25519 | grep "Password (PublicKey)" | awk '{print $3}')
-UUID=$(docker run --rm teddysun/xray:latest xray uuid)
-SHORT_ID=${UUID:0:8}
+# Create Xray config only once. Existing keys and clients must be preserved.
+if [ ! -f xray-config/config.json ] && [ -f xray-config/config.template.json ]; then
+    echo -e "${YELLOW}Generating Xray keys...${NC}"
+    PRIVATE_KEY=$(docker run --rm teddysun/xray:latest xray x25519 | grep PrivateKey | awk '{print $2}')
+    UUID=$(docker run --rm teddysun/xray:latest xray uuid)
+    SHORT_ID=${UUID:0:8}
 
-# Create Xray config from template
-if [ -f xray-config/config.template.json ]; then
-    sed "s/YOUR_UUID/$UUID/g; s/YOUR_PRIVATE_KEY/$PRIVATE_KEY/g; s/YOUR_PUBLIC_KEY/$PUBLIC_KEY/g; s/YOUR_SHORT_ID/$SHORT_ID/g" \
+    sed "s/YOUR_UUID/$UUID/g; s/YOUR_PRIVATE_KEY/$PRIVATE_KEY/g; s/YOUR_SHORT_ID/$SHORT_ID/g" \
         xray-config/config.template.json > xray-config/config.json
     echo -e "${GREEN}✓ Xray config generated${NC}"
+elif [ -f xray-config/config.json ]; then
+    echo -e "${YELLOW}Xray config already exists, preserving keys and clients${NC}"
 fi
 
 # Create data directories
