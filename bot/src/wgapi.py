@@ -38,7 +38,25 @@ class WGEasyAPI:
         return self._request("GET", "/api/wireguard/client").json()
 
     def create_client(self, name: str):
-        return self._request("POST", "/api/wireguard/client", json={"name": name, "expiresAt": None}).json()
+        clients_before = {client["id"] for client in self.list_clients()}
+        result = self._request(
+            "POST",
+            "/api/wireguard/client",
+            json={"name": name, "expiresAt": None},
+        ).json()
+
+        if result.get("id") or result.get("clientId"):
+            return result
+
+        # Older wg-easy API versions only return {"success": true}.
+        created = [
+            client
+            for client in self.list_clients()
+            if client["id"] not in clients_before and client.get("name") == name
+        ]
+        if len(created) != 1:
+            raise RuntimeError("Peer was created, but its config could not be identified")
+        return created[0]
 
     def delete_client(self, client_id):
         return self._request("DELETE", f"/api/wireguard/client/{client_id}").json()
