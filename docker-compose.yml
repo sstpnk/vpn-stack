@@ -48,7 +48,7 @@ services:
     ports:
       - "${XRAY_PORT:-443}:443/tcp"
     volumes:
-      - ./xray-config/config.json:/etc/xray/config.json:ro
+      - ./xray-config:/etc/xray:ro
 
   vpn-bot:
     build: ./bot
@@ -59,7 +59,16 @@ services:
       - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
       - WG_EASY_URL=http://wg-easy:51821
       - WG_EASY_PASSWORD=${WG_EASY_PASSWORD}
+      - WG_HOST=${WG_HOST}
+      - XRAY_PUBLIC_HOST=${XRAY_PUBLIC_HOST:-}
+      - XRAY_PORT=${XRAY_PORT:-443}
+      - XRAY_CONFIG_PATH=/xray-config/config.json
+      - XRAY_CONTAINER=vpn-xray
+      - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-zoom.us}
+      - XRAY_FINGERPRINT=${XRAY_FINGERPRINT:-randomized}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./xray-config:/xray-config
     depends_on:
       - wg-easy
+      - xray

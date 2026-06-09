@@ -5,6 +5,7 @@ bot/.env
 # Data directories with generated configs
 data/
 xray-config/config.json
+xray-config/config.*.pending.json
 
 # Python cache
 __pycache__/

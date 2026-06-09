@@ -1,4 +1,5 @@
 import html
+import json
 import logging
 import os
 from datetime import datetime, timezone
@@ -22,6 +23,7 @@ from telegram.ext import (
 )
 
 from wgapi import WGEasyAPI
+from xray_manager import XrayManager
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -31,6 +33,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 wg = WGEasyAPI()
+xray = XrayManager()
 
 ALLOWED_USERNAMES = {
     u.strip().lstrip("@")
@@ -41,6 +44,7 @@ ALLOWED_USERNAMES = {
 WAITING_FOR_NAME = 1
 WAITING_FOR_SEARCH = 2
 WAITING_FOR_RENAME = 3
+WAITING_FOR_VLESS_NAME = 4
 
 PAGE_SIZE = 8
 
@@ -49,6 +53,8 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
         ["📋 Peers"],
         ["➕ Create Peer", "📥 Get Config"],
         ["🔍 Search", "🗑 Delete Peer"],
+        ["➕ VLESS", "🔗 VLESS Links"],
+        ["🗑 VLESS"],
     ],
     resize_keyboard=True,
 )
@@ -73,6 +79,13 @@ INLINE_MENU = InlineKeyboardMarkup([
     [
         InlineKeyboardButton("🔍 Search", callback_data="menu:search"),
         InlineKeyboardButton("🗑 Delete Peer", callback_data="menu:delete"),
+    ],
+    [
+        InlineKeyboardButton("➕ VLESS", callback_data="menu:vless_create"),
+        InlineKeyboardButton("🔗 VLESS Links", callback_data="menu:vless_list"),
+    ],
+    [
+        InlineKeyboardButton("🗑 VLESS", callback_data="menu:vless_delete"),
     ],
 ])
 
@@ -219,6 +232,116 @@ async def config_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @require_access
 async def delete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await _show_peer_selection(update, context, "del")
+
+
+# ── VLESS management ──────────────────────────────────────────────────────────
+
+def vless_delete_keyboard(clients: list[dict]) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(
+            f"🗑 {client['name']}",
+            callback_data=f"vldel:{client['id']}",
+        )]
+        for client in clients
+    ]
+    rows.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
+    return InlineKeyboardMarkup(rows)
+
+
+async def send_vless_connection(
+    message,
+    connection: dict,
+    created: bool = False,
+    include_client_config: bool = False,
+):
+    title = (
+        f"✅ VLESS <b>{html.escape(connection['name'])}</b> created"
+        if created
+        else f"🔗 <b>{html.escape(connection['name'])}</b>"
+    )
+    await message.reply_text(
+        f"{title}\n\n<code>{html.escape(connection['link'])}</code>",
+        parse_mode="HTML",
+        disable_web_page_preview=True,
+    )
+
+    if include_client_config:
+        config_data = json.dumps(
+            connection["client_config"],
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        await message.reply_document(
+            document=BytesIO(config_data),
+            filename=f"vless-{connection['id'][:8]}-xray.json",
+            caption="Xray/NekoBox client JSON with recommended Mux settings.",
+        )
+
+
+@require_access
+async def vless_create_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.args:
+        try:
+            connection = xray.create_client(" ".join(context.args))
+            await send_vless_connection(
+                update.message,
+                connection,
+                created=True,
+                include_client_config=True,
+            )
+        except Exception as e:
+            logger.exception("Failed to create VLESS connection")
+            await update.message.reply_text(f"Xray error: {e}")
+        return ConversationHandler.END
+
+    await update.message.reply_text("Enter VLESS connection name:", reply_markup=CANCEL_CONV_KB)
+    return WAITING_FOR_VLESS_NAME
+
+
+@require_access
+async def vless_create_receive_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        connection = xray.create_client(update.message.text)
+        await send_vless_connection(
+            update.message,
+            connection,
+            created=True,
+            include_client_config=True,
+        )
+    except Exception as e:
+        logger.exception("Failed to create VLESS connection")
+        await update.message.reply_text(f"Xray error: {e}")
+    return ConversationHandler.END
+
+
+@require_access
+async def vless_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        clients = xray.list_clients()
+        if not clients:
+            await update.message.reply_text("No VLESS connections found.")
+            return
+        for client in clients:
+            await send_vless_connection(update.message, client)
+    except Exception as e:
+        logger.exception("Failed to list VLESS connections")
+        await update.message.reply_text(f"Xray error: {e}")
+
+
+@require_access
+async def vless_delete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        clients = xray.list_clients()
+        if not clients:
+            await update.message.reply_text("No VLESS connections found.")
+            return
+        await update.message.reply_text(
+            "Select VLESS connection to delete:",
+            reply_markup=vless_delete_keyboard(clients),
+        )
+    except Exception as e:
+        logger.exception("Failed to list VLESS connections for deletion")
+        await update.message.reply_text(f"Xray error: {e}")
 
 
 # ── Create peer conversation ──────────────────────────────────────────────────
@@ -396,6 +519,39 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif action == "search":
             await query.message.reply_text("Use /search &lt;name&gt; to find peers.", parse_mode="HTML")
 
+        elif action == "vless_create":
+            await query.message.reply_text(
+                "Use /vless_create &lt;name&gt; or the ➕ VLESS keyboard button.",
+                parse_mode="HTML",
+            )
+
+        elif action == "vless_list":
+            try:
+                clients = xray.list_clients()
+                if not clients:
+                    await query.message.reply_text("No VLESS connections found.")
+                    return
+                await query.edit_message_text(f"Found {len(clients)} VLESS connection(s).")
+                for client in clients:
+                    await send_vless_connection(query.message, client)
+            except Exception as e:
+                logger.exception("Failed to list VLESS connections")
+                await query.edit_message_text(f"Xray error: {e}")
+
+        elif action == "vless_delete":
+            try:
+                clients = xray.list_clients()
+                if not clients:
+                    await query.edit_message_text("No VLESS connections found.")
+                    return
+                await query.edit_message_text(
+                    "Select VLESS connection to delete:",
+                    reply_markup=vless_delete_keyboard(clients),
+                )
+            except Exception as e:
+                logger.exception("Failed to list VLESS connections for deletion")
+                await query.edit_message_text(f"Xray error: {e}")
+
         elif action in ("config", "delete"):
             try:
                 clients = wg.list_clients()
@@ -474,6 +630,48 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(f"API error: {e}")
         return
 
+    # ── VLESS delete ──
+    if data.startswith("vldel:"):
+        client_id = data[6:]
+        try:
+            client = next(
+                item for item in xray.list_clients()
+                if item["id"] == client_id
+            )
+        except StopIteration:
+            await query.edit_message_text("VLESS connection not found.")
+            return
+        except Exception as e:
+            logger.exception("Failed to load VLESS connection")
+            await query.edit_message_text(f"Xray error: {e}")
+            return
+
+        await query.edit_message_text(
+            f"Delete VLESS connection <b>{html.escape(client['name'])}</b>?",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(
+                    "✅ Yes, delete",
+                    callback_data=f"vldelconfirm:{client_id}",
+                ),
+                InlineKeyboardButton("❌ Cancel", callback_data="cancel"),
+            ]]),
+            parse_mode="HTML",
+        )
+        return
+
+    if data.startswith("vldelconfirm:"):
+        client_id = data[13:]
+        try:
+            deleted = xray.delete_client(client_id)
+            await query.edit_message_text(
+                f"✅ VLESS connection <b>{html.escape(deleted['name'])}</b> deleted.",
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.exception("Failed to delete VLESS connection")
+            await query.edit_message_text(f"Xray error: {e}")
+        return
+
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -481,7 +679,16 @@ def main():
     token = os.environ["BOT_TOKEN"]
     app = Application.builder().token(token).build()
 
-    kb_buttons = ["📋 Peers", "➕ Create Peer", "📥 Get Config", "🔍 Search", "🗑 Delete Peer"]
+    kb_buttons = [
+        "📋 Peers",
+        "➕ Create Peer",
+        "📥 Get Config",
+        "🔍 Search",
+        "🗑 Delete Peer",
+        "➕ VLESS",
+        "🔗 VLESS Links",
+        "🗑 VLESS",
+    ]
     kb_filter = filters.Text(kb_buttons)
     cancel_cb = CallbackQueryHandler(cancel_from_button, pattern="^cancel_conv$")
 
@@ -491,6 +698,8 @@ def main():
             CommandHandler("create", create_start),
             MessageHandler(filters.Text(["🔍 Search"]), search_start),
             CommandHandler("search", search_start),
+            MessageHandler(filters.Text(["➕ VLESS"]), vless_create_start),
+            CommandHandler("vless_create", vless_create_start),
             CallbackQueryHandler(rename_start, pattern="^ren:"),
         ],
         states={
@@ -509,6 +718,11 @@ def main():
                 cancel_cb,
                 MessageHandler(filters.TEXT & ~filters.COMMAND, rename_receive),
             ],
+            WAITING_FOR_VLESS_NAME: [
+                MessageHandler(kb_filter, cancel_conv),
+                cancel_cb,
+                MessageHandler(filters.TEXT & ~filters.COMMAND, vless_create_receive_name),
+            ],
         },
         fallbacks=[
             CommandHandler("cancel", cancel_conv),
@@ -522,6 +736,10 @@ def main():
     app.add_handler(MessageHandler(filters.Text(["📋 Peers"]), list_peers))
     app.add_handler(MessageHandler(filters.Text(["📥 Get Config"]), config_menu))
     app.add_handler(MessageHandler(filters.Text(["🗑 Delete Peer"]), delete_menu))
+    app.add_handler(MessageHandler(filters.Text(["🔗 VLESS Links"]), vless_list))
+    app.add_handler(CommandHandler("vless_list", vless_list))
+    app.add_handler(MessageHandler(filters.Text(["🗑 VLESS"]), vless_delete_menu))
+    app.add_handler(CommandHandler("vless_delete", vless_delete_menu))
     app.add_handler(CallbackQueryHandler(on_callback))
 
     logger.info("Bot started, allowed users: %s", ALLOWED_USERNAMES)
