@@ -34,8 +34,8 @@ if [ ! -f .env ]; then
     echo
     read -p "WireGuard port [51820]: " WG_PORT
     WG_PORT=${WG_PORT:-51820}
-    read -p "Xray port [443]: " XRAY_PORT
-    XRAY_PORT=${XRAY_PORT:-443}
+    read -p "Xray port [8443]: " XRAY_PORT
+    XRAY_PORT=${XRAY_PORT:-8443}
     read -p "Telegram bot token (press Enter to skip): " BOT_TOKEN
     read -p "Telegram username (without @): " ALLOWED_USERNAMES
     

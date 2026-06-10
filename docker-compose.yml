@@ -46,7 +46,7 @@ services:
     container_name: vpn-xray
     restart: unless-stopped
     ports:
-      - "${XRAY_PORT:-443}:443/tcp"
+      - "${XRAY_PORT:-8443}:8443/tcp"
     volumes:
       - ./xray-config:/etc/xray:ro
 
@@ -61,7 +61,7 @@ services:
       - WG_EASY_PASSWORD=${WG_EASY_PASSWORD}
       - WG_HOST=${WG_HOST}
       - XRAY_PUBLIC_HOST=${XRAY_PUBLIC_HOST:-}
-      - XRAY_PORT=${XRAY_PORT:-443}
+      - XRAY_PORT=${XRAY_PORT:-8443}
       - XRAY_CONFIG_PATH=/xray-config/config.json
       - XRAY_CONTAINER=vpn-xray
       - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-zoom.us}

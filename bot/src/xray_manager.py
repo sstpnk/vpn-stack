@@ -16,7 +16,7 @@ class XrayManager:
         self.config_path = Path(os.environ.get("XRAY_CONFIG_PATH", "/xray-config/config.json"))
         self.container_name = os.environ.get("XRAY_CONTAINER", "vpn-xray")
         self.public_host = os.environ.get("XRAY_PUBLIC_HOST") or os.environ.get("WG_HOST", "")
-        self.public_port = int(os.environ.get("XRAY_PORT", "443"))
+        self.public_port = int(os.environ.get("XRAY_PORT", "8443"))
         self.server_name = os.environ.get("XRAY_SERVER_NAME", "zoom.us")
         self.fingerprint = os.environ.get("XRAY_FINGERPRINT", "randomized")
         self.restart_stability_seconds = float(
