@@ -64,7 +64,7 @@ services:
       - XRAY_PORT=${XRAY_PORT:-8443}
       - XRAY_CONFIG_PATH=/xray-config/config.json
       - XRAY_CONTAINER=vpn-xray
-      - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-zoom.us}
+      - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-www.google.com}
       - XRAY_FINGERPRINT=${XRAY_FINGERPRINT:-randomized}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

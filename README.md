@@ -153,7 +153,7 @@ WG_PERSISTENT_KEEPALIVE=25
 WG_ALLOWED_IPS=
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
-XRAY_SERVER_NAME=zoom.us
+XRAY_SERVER_NAME=www.google.com
 XRAY_FINGERPRINT=randomized
 
 # Параметры AmneziaWG
@@ -198,7 +198,7 @@ docker compose up -d --build --force-recreate
 | `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
 | `XRAY_PORT` | `8443` | внешний TCP-порт Xray Reality |
 | `XRAY_PUBLIC_HOST` | `WG_HOST` | адрес, используемый в VLESS-ссылках |
-| `XRAY_SERVER_NAME` | `zoom.us` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
+| `XRAY_SERVER_NAME` | `www.google.com` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
 | `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint в клиентских VLESS-профилях |
 | `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
 | `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
@@ -487,13 +487,13 @@ docker compose up -d --build --force-recreate wg-easy
 Xray Reality работает как резервный транспорт. Клиент должен поддерживать
 VLESS Reality и flow `xtls-rprx-vision`.
 
-Новая установка использует `zoom.us:443` как Reality target и разрешает SNI
-`zoom.us` и `www.zoom.us`. Для уже существующей установки бот читает
+Новая установка использует `www.google.com:443` как Reality target и разрешает SNI
+`www.google.com`. Для уже существующей установки бот читает
 фактический `serverNames` из `xray-config/config.json` и использует разрешённое
 значение в ссылке. Это не ломает ранее созданные подключения при обновлении
 бота.
 
-`zoom.us` является настраиваемым default, а не универсально лучшим target.
+`www.google.com` является настраиваемым default, а не универсально лучшим target.
 Официальная рекомендация Xray — выбирать доступный TLS-сайт по возможности в
 том же ASN, что и VPS. Не меняйте `target/serverNames` у работающего сервера без
 плана обновления существующих клиентов.
@@ -501,7 +501,7 @@ VLESS Reality и flow `xtls-rprx-vision`.
 Пример генерируемой ссылки:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=zoom.us&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2FSHORT_ID#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 Для каждого подключения бот:
@@ -510,7 +510,7 @@ vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-
 - создаёт отдельный 8-символьный hex `shortId`;
 - вычисляет public key из существующего Reality private key, не меняя пару;
 - формирует ссылку с согласованным SNI;
-- создаёт отдельный `spiderX` в формате `/<shortId>`;
+- использует `spiderX=/`, как в клиентском шаблоне;
 - формирует клиентский JSON с `concurrency=8`, `xudpConcurrency=8` и
   `xudpProxyUDP443=reject`.
 

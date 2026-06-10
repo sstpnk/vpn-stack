@@ -17,7 +17,7 @@ class XrayManager:
         self.container_name = os.environ.get("XRAY_CONTAINER", "vpn-xray")
         self.public_host = os.environ.get("XRAY_PUBLIC_HOST") or os.environ.get("WG_HOST", "")
         self.public_port = int(os.environ.get("XRAY_PORT", "8443"))
-        self.server_name = os.environ.get("XRAY_SERVER_NAME", "zoom.us")
+        self.server_name = os.environ.get("XRAY_SERVER_NAME", "www.google.com")
         self.fingerprint = os.environ.get("XRAY_FINGERPRINT", "randomized")
         self.restart_stability_seconds = float(
             os.environ.get("XRAY_RESTART_STABILITY_SECONDS", "2")
@@ -233,7 +233,7 @@ class XrayManager:
             "sni": server_name,
             "pbk": public_key,
             "sid": short_id,
-            "spx": f"/{short_id}",
+            "spx": "/",
         }
         if flow:
             query_parameters["flow"] = flow
@@ -276,7 +276,7 @@ class XrayManager:
                         "serverName": server_name,
                         "password": public_key,
                         "shortId": short_id,
-                        "spiderX": f"/{short_id}",
+                        "spiderX": "/",
                     },
                 },
                 "mux": {
