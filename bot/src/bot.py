@@ -50,11 +50,14 @@ PAGE_SIZE = 8
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        ["📋 Peers"],
-        ["➕ Create Peer", "📥 Get Config"],
-        ["🔍 Search", "🗑 Delete Peer"],
-        ["➕ VLESS", "🔗 VLESS Links"],
-        ["🗑 VLESS"],
+        ["📋 AWG Peers"],
+        ["➕ Create Peer"],
+        ["📥 Get Peer Config"],
+        ["🗑 Delete Peer"],
+        ["🔗 VLESS Links"],
+        ["➕ Create VLESS"],
+        ["🗑 Delete VLESS"],
+        ["🔍 Search Assets"],
     ],
     resize_keyboard=True,
 )
@@ -70,22 +73,28 @@ PEER_SELECT_TITLE = {
 
 INLINE_MENU = InlineKeyboardMarkup([
     [
-        InlineKeyboardButton("📋 Peers", callback_data="menu:list"),
+        InlineKeyboardButton("📋 AWG Peers", callback_data="menu:list"),
     ],
     [
         InlineKeyboardButton("➕ Create Peer", callback_data="menu:create"),
-        InlineKeyboardButton("📥 Get Config", callback_data="menu:config"),
     ],
     [
-        InlineKeyboardButton("🔍 Search", callback_data="menu:search"),
+        InlineKeyboardButton("📥 Get Peer Config", callback_data="menu:config"),
+    ],
+    [
         InlineKeyboardButton("🗑 Delete Peer", callback_data="menu:delete"),
     ],
     [
-        InlineKeyboardButton("➕ VLESS", callback_data="menu:vless_create"),
         InlineKeyboardButton("🔗 VLESS Links", callback_data="menu:vless_list"),
     ],
     [
-        InlineKeyboardButton("🗑 VLESS", callback_data="menu:vless_delete"),
+        InlineKeyboardButton("➕ Create VLESS", callback_data="menu:vless_create"),
+    ],
+    [
+        InlineKeyboardButton("🗑 Delete VLESS", callback_data="menu:vless_delete"),
+    ],
+    [
+        InlineKeyboardButton("🔍 Search Assets", callback_data="menu:search"),
     ],
 ])
 
@@ -385,7 +394,7 @@ async def search_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
         await _do_search(update, " ".join(context.args))
         return ConversationHandler.END
-    await update.message.reply_text("Enter search term:")
+    await update.message.reply_text("Enter peer or VLESS name:")
     return WAITING_FOR_SEARCH
 
 
@@ -399,29 +408,70 @@ async def _do_search(update: Update, term: str):
     if not term:
         await update.message.reply_text("Search term cannot be empty.")
         return
-    try:
-        clients = wg.list_clients()
-    except Exception as e:
-        await update.message.reply_text(f"API error: {e}")
-        return
 
-    matching = filter_clients(clients, term)
-    if not matching:
-        await update.message.reply_text(f"No peers matching <b>{html.escape(term)}</b>.", parse_mode="HTML")
+    peer_error = None
+    vless_error = None
+    try:
+        peers = filter_clients(wg.list_clients(), term)
+    except Exception as e:
+        logger.exception("Failed to search AWG peers")
+        peers = []
+        peer_error = str(e)
+
+    try:
+        vless_clients = filter_clients(xray.list_clients(), term)
+    except Exception as e:
+        logger.exception("Failed to search VLESS connections")
+        vless_clients = []
+        vless_error = str(e)
+
+    if not peers and not vless_clients:
+        errors = []
+        if peer_error:
+            errors.append(f"AWG API: {html.escape(peer_error)}")
+        if vless_error:
+            errors.append(f"Xray: {html.escape(vless_error)}")
+        suffix = f"\n\n{' | '.join(errors)}" if errors else ""
+        await update.message.reply_text(
+            f"No assets matching <b>{html.escape(term)}</b>.{suffix}",
+            parse_mode="HTML",
+        )
         return
 
     keyboard = []
-    for c in matching:
+    for c in peers:
         name = c.get("name", str(c["id"]))
         keyboard.append([
             InlineKeyboardButton(f"📄 {name}", callback_data=f"cfg:{c['id']}"),
             InlineKeyboardButton("✏️", callback_data=f"ren:{c['id']}:{name[:40]}"),
             InlineKeyboardButton("🗑", callback_data=f"del:{c['id']}:{name[:40]}"),
         ])
+    for client in vless_clients:
+        name = client.get("name", client["id"])
+        keyboard.append([
+            InlineKeyboardButton(
+                f"🔗 {name}",
+                callback_data=f"vllink:{client['id']}",
+            ),
+            InlineKeyboardButton(
+                "🗑",
+                callback_data=f"vldel:{client['id']}",
+            ),
+        ])
     keyboard.append([InlineKeyboardButton("Close", callback_data="cancel")])
 
+    summary = [
+        f"Found assets matching <b>{html.escape(term)}</b>:",
+        f"📋 AWG peers: <b>{len(peers)}</b>",
+        f"🔗 VLESS links: <b>{len(vless_clients)}</b>",
+    ]
+    if peer_error:
+        summary.append(f"⚠️ AWG API: {html.escape(peer_error)}")
+    if vless_error:
+        summary.append(f"⚠️ Xray: {html.escape(vless_error)}")
+
     await update.message.reply_text(
-        f"Found <b>{len(matching)}</b> peer(s) matching <b>{html.escape(term)}</b>:",
+        "\n".join(summary),
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="HTML",
     )
@@ -517,11 +567,14 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text("Use /create &lt;name&gt; to create a new peer.", parse_mode="HTML")
 
         elif action == "search":
-            await query.message.reply_text("Use /search &lt;name&gt; to find peers.", parse_mode="HTML")
+            await query.message.reply_text(
+                "Use /search &lt;name&gt; to find AWG peers and VLESS links.",
+                parse_mode="HTML",
+            )
 
         elif action == "vless_create":
             await query.message.reply_text(
-                "Use /vless_create &lt;name&gt; or the ➕ VLESS keyboard button.",
+                "Use /vless_create &lt;name&gt; or the ➕ Create VLESS keyboard button.",
                 parse_mode="HTML",
             )
 
@@ -630,7 +683,22 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(f"API error: {e}")
         return
 
-    # ── VLESS delete ──
+    # ── VLESS link/delete ──
+    if data.startswith("vllink:"):
+        client_id = data[7:]
+        try:
+            client = next(
+                item for item in xray.list_clients()
+                if item["id"] == client_id
+            )
+            await send_vless_connection(query.message, client)
+        except StopIteration:
+            await query.edit_message_text("VLESS connection not found.")
+        except Exception as e:
+            logger.exception("Failed to load VLESS connection")
+            await query.edit_message_text(f"Xray error: {e}")
+        return
+
     if data.startswith("vldel:"):
         client_id = data[6:]
         try:
@@ -680,14 +748,14 @@ def main():
     app = Application.builder().token(token).build()
 
     kb_buttons = [
-        "📋 Peers",
+        "📋 AWG Peers",
         "➕ Create Peer",
-        "📥 Get Config",
-        "🔍 Search",
+        "📥 Get Peer Config",
         "🗑 Delete Peer",
-        "➕ VLESS",
         "🔗 VLESS Links",
-        "🗑 VLESS",
+        "➕ Create VLESS",
+        "🗑 Delete VLESS",
+        "🔍 Search Assets",
     ]
     kb_filter = filters.Text(kb_buttons)
     cancel_cb = CallbackQueryHandler(cancel_from_button, pattern="^cancel_conv$")
@@ -696,9 +764,9 @@ def main():
         entry_points=[
             MessageHandler(filters.Text(["➕ Create Peer"]), create_start),
             CommandHandler("create", create_start),
-            MessageHandler(filters.Text(["🔍 Search"]), search_start),
+            MessageHandler(filters.Text(["🔍 Search Assets"]), search_start),
             CommandHandler("search", search_start),
-            MessageHandler(filters.Text(["➕ VLESS"]), vless_create_start),
+            MessageHandler(filters.Text(["➕ Create VLESS"]), vless_create_start),
             CommandHandler("vless_create", vless_create_start),
             CallbackQueryHandler(rename_start, pattern="^ren:"),
         ],
@@ -733,12 +801,12 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", menu))
     app.add_handler(conv_handler)
-    app.add_handler(MessageHandler(filters.Text(["📋 Peers"]), list_peers))
-    app.add_handler(MessageHandler(filters.Text(["📥 Get Config"]), config_menu))
+    app.add_handler(MessageHandler(filters.Text(["📋 AWG Peers"]), list_peers))
+    app.add_handler(MessageHandler(filters.Text(["📥 Get Peer Config"]), config_menu))
     app.add_handler(MessageHandler(filters.Text(["🗑 Delete Peer"]), delete_menu))
     app.add_handler(MessageHandler(filters.Text(["🔗 VLESS Links"]), vless_list))
     app.add_handler(CommandHandler("vless_list", vless_list))
-    app.add_handler(MessageHandler(filters.Text(["🗑 VLESS"]), vless_delete_menu))
+    app.add_handler(MessageHandler(filters.Text(["🗑 Delete VLESS"]), vless_delete_menu))
     app.add_handler(CommandHandler("vless_delete", vless_delete_menu))
     app.add_handler(CallbackQueryHandler(on_callback))
 

@@ -281,6 +281,7 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
     return QRCode.toString(config, {
       type: 'svg',
       width: 512,
+      errorCorrectionLevel: 'L',
     });
   }
 
