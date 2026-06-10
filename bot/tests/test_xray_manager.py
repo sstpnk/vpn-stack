@@ -72,8 +72,8 @@ def sample_config():
             "streamSettings": {
                 "security": "reality",
                 "realitySettings": {
-                    "target": "zoom.us:443",
-                    "serverNames": ["zoom.us", "www.zoom.us"],
+                    "target": "www.google.com:443",
+                    "serverNames": ["www.google.com"],
                     "privateKey": "PRIVATE_KEY",
                     "shortIds": ["11111111"],
                 },
@@ -97,7 +97,7 @@ class XrayManagerTest(unittest.TestCase):
             "XRAY_CONTAINER": "vpn-xray",
             "XRAY_PUBLIC_HOST": "203.0.113.10",
             "XRAY_PORT": "8443",
-            "XRAY_SERVER_NAME": "zoom.us",
+            "XRAY_SERVER_NAME": "www.google.com",
             "XRAY_FINGERPRINT": "randomized",
             "XRAY_RESTART_STABILITY_SECONDS": "0",
         })
@@ -110,7 +110,7 @@ class XrayManagerTest(unittest.TestCase):
         clients = self.manager.list_clients()
 
         self.assertEqual(len(clients), 1)
-        self.assertIn("sni=zoom.us", clients[0]["link"])
+        self.assertIn("sni=www.google.com", clients[0]["link"])
         self.assertIn("sid=11111111", clients[0]["link"])
         outbound = clients[0]["client_config"]["outbounds"][0]
         self.assertEqual(outbound["mux"]["xudpProxyUDP443"], "reject")
@@ -118,7 +118,12 @@ class XrayManagerTest(unittest.TestCase):
             outbound["streamSettings"]["realitySettings"]["password"],
             "PUBLIC_KEY",
         )
-        self.assertIn("spx=%2F11111111", clients[0]["link"])
+        self.assertIn("spx=%2F", clients[0]["link"])
+        self.assertNotIn("spx=%2F11111111", clients[0]["link"])
+        self.assertEqual(
+            outbound["streamSettings"]["realitySettings"]["spiderX"],
+            "/",
+        )
 
     def test_legacy_client_link_does_not_invent_flow(self):
         config = sample_config()
