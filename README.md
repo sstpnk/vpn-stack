@@ -7,7 +7,7 @@
 ## Что входит в стек
 
 - **AmneziaWG Easy** — VPN-сервер и веб-интерфейс управления peer-ами.
-- **Xray Reality** — резервный VLESS Reality-сервер на TCP-порту 443.
+- **Xray Reality** — резервный VLESS Reality-сервер на TCP-порту 8443.
 - **Telegram-бот** — создание, поиск и удаление peer-ов, выдача готовых
   клиентских конфигураций.
 - **Split tunneling** — клиентский конфиг направляет публичный IPv4-трафик
@@ -26,10 +26,10 @@
 |------|----------|------------|
 | `22` | TCP | SSH; замените, если SSH работает на другом порту |
 | `51820` | UDP | AmneziaWG |
-| `443` | TCP | Xray Reality |
+| `8443` | TCP | Xray Reality |
 | `51821` | TCP | веб-интерфейс; рекомендуется только локальный доступ через SSH |
 
-Публичные порты `22/tcp`, `51820/udp` и `443/tcp` нужно разрешить и в firewall
+Публичные порты `22/tcp`, `51820/udp` и `8443/tcp` нужно разрешить и в firewall
 операционной системы, и в firewall/security group панели VPS-провайдера.
 
 > Веб-интерфейс на порту `51821` работает по HTTP. Не оставляйте его открытым
@@ -60,7 +60,7 @@ apt update
 apt install -y ufw
 ufw allow OpenSSH
 ufw allow 51820/udp
-ufw allow 443/tcp
+ufw allow 8443/tcp
 ufw enable
 ufw status
 ```
@@ -124,7 +124,7 @@ docker compose logs --tail=100 xray
 Все контейнеры должны иметь состояние `Up`. Для проверки открытых портов:
 
 ```bash
-ss -lntup | grep -E ':(443|51820|51821)\b'
+ss -lntup | grep -E ':(8443|51820|51821)\b'
 ```
 
 Чтобы открыть закрытый веб-интерфейс, создайте SSH-туннель со своего
@@ -151,7 +151,7 @@ WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
 # Пустое значение использует split-маршруты из локального fork-а
 WG_ALLOWED_IPS=
-XRAY_PORT=443
+XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=zoom.us
 XRAY_FINGERPRINT=randomized
@@ -196,7 +196,7 @@ docker compose up -d --build --force-recreate
 | `WG_MTU` | `1280` | MTU, добавляемый сервером в клиентский конфиг |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | интервал keepalive клиента в секундах |
 | `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
-| `XRAY_PORT` | `443` | внешний TCP-порт Xray Reality |
+| `XRAY_PORT` | `8443` | внешний TCP-порт Xray Reality |
 | `XRAY_PUBLIC_HOST` | `WG_HOST` | адрес, используемый в VLESS-ссылках |
 | `XRAY_SERVER_NAME` | `zoom.us` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
 | `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint в клиентских VLESS-профилях |
@@ -501,7 +501,7 @@ VLESS Reality и flow `xtls-rprx-vision`.
 Пример генерируемой ссылки:
 
 ```text
-vless://UUID@SERVER_IP:443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=zoom.us&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2FSHORT_ID#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=zoom.us&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2FSHORT_ID#NAME
 ```
 
 Для каждого подключения бот:

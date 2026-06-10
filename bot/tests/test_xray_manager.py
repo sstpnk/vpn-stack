@@ -96,7 +96,7 @@ class XrayManagerTest(unittest.TestCase):
             "XRAY_CONFIG_PATH": str(self.config_path),
             "XRAY_CONTAINER": "vpn-xray",
             "XRAY_PUBLIC_HOST": "203.0.113.10",
-            "XRAY_PORT": "443",
+            "XRAY_PORT": "8443",
             "XRAY_SERVER_NAME": "zoom.us",
             "XRAY_FINGERPRINT": "randomized",
             "XRAY_RESTART_STABILITY_SECONDS": "0",
