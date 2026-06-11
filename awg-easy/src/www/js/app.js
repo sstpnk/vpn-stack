@@ -61,8 +61,10 @@ new Vue({
     clientDelete: null,
     clientCreate: null,
     clientCreateName: '',
-    clientCreateMaskingPreset: '',
+    clientCreateMaskingPreset: 'system-defaults',
     clientCreateMasking: {},
+    clientCreateMaskingChanged: false,
+    maskingDefaults: null,
     maskingPresets: [],
     clientEditName: null,
     clientEditNameId: null,
@@ -274,25 +276,26 @@ new Vue({
     openClientCreate() {
       this.clientCreate = true;
       this.clientCreateName = '';
-      this.clientCreateMaskingPreset = '';
-      this.clientCreateMasking = {};
+      this.clientCreateMaskingPreset = 'system-defaults';
+      this.applyMaskingProfile(this.maskingDefaults);
     },
     selectMaskingPreset() {
-      const preset = this.maskingPresets.find((item) => item.id === this.clientCreateMaskingPreset);
-      this.clientCreateMasking = preset
-        ? {
-          h1: preset.h1,
-          h2: preset.h2,
-          h3: preset.h3,
-          h4: preset.h4,
-          i1: preset.i1,
-          i2: preset.i2,
-          i3: preset.i3,
-          i4: preset.i4,
-          i5: preset.i5,
-          initPacketDelay: preset.initPacketDelay,
-        }
+      const profile = this.clientCreateMaskingPreset === 'system-defaults'
+        ? this.maskingDefaults
+        : this.maskingPresets.find((item) => item.id === this.clientCreateMaskingPreset);
+      this.applyMaskingProfile(profile);
+    },
+    applyMaskingProfile(profile) {
+      this.clientCreateMasking = profile
+        ? Object.fromEntries(
+          ['h1', 'h2', 'h3', 'h4', 'i1', 'i2', 'i3', 'i4', 'i5', 'initPacketDelay']
+            .map((key) => [key, profile[key] === undefined ? '' : profile[key]]),
+        )
         : {};
+      this.clientCreateMaskingChanged = false;
+    },
+    markMaskingChanged() {
+      this.clientCreateMaskingChanged = true;
     },
     createClient() {
       const name = this.clientCreateName;
@@ -300,8 +303,12 @@ new Vue({
 
       this.api.createClient({
         name,
-        maskingPreset: this.clientCreateMaskingPreset || undefined,
-        masking: Object.keys(this.clientCreateMasking).length ? this.clientCreateMasking : undefined,
+        maskingPreset: this.clientCreateMaskingPreset === 'system-defaults'
+          ? undefined
+          : this.clientCreateMaskingPreset,
+        masking: this.clientCreateMaskingPreset !== 'system-defaults' || this.clientCreateMaskingChanged
+          ? this.clientCreateMasking
+          : undefined,
       })
         .catch((err) => alert(err.message || err.toString()))
         .finally(() => this.refresh().catch(console.error));
@@ -365,8 +372,12 @@ new Vue({
 
     this.api = new API();
     this.api.getMaskingPresets()
-      .then((presets) => {
+      .then(({ defaults, presets }) => {
+        this.maskingDefaults = defaults;
         this.maskingPresets = presets;
+        if (this.clientCreateMaskingPreset === 'system-defaults' && !this.clientCreateMaskingChanged) {
+          this.applyMaskingProfile(defaults);
+        }
       })
       .catch((err) => console.error(err));
     this.api.getSession()
