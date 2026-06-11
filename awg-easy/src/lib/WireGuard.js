@@ -8,6 +8,7 @@ const QRCode = require('qrcode');
 
 const Util = require('./Util');
 const ServerError = require('./ServerError');
+const MASKING_PRESETS = require('./MaskingPresets');
 
 const {
   WG_PATH,
@@ -228,6 +229,18 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
   async getClientConfiguration({ clientId }) {
     const config = await this.getConfig();
     const client = await this.getClient({ clientId });
+    const masking = {
+      h1: config.server.h1,
+      h2: config.server.h2,
+      h3: config.server.h3,
+      h4: config.server.h4,
+      i1: I1,
+      i2: I2,
+      i3: I3,
+      i4: I4,
+      i5: I5,
+      ...client.masking,
+    };
 
     return `
 [Interface]
@@ -249,25 +262,23 @@ S2 = ${config.server.s2}
 
 # --- Динамические заголовки пакетов ---
 # H1-H4: значения или диапазоны заголовков Init, Response, Cookie и Transport.
-# Сервер и клиент должны использовать одинаковые значения; диапазоны не пересекаются.
-H1 = ${config.server.h1}
-H2 = ${config.server.h2}
-H3 = ${config.server.h3}
-H4 = ${config.server.h4}
+# Значения и диапазоны H1-H4 внутри конфигурации не должны пересекаться.
+H1 = ${masking.h1}
+H2 = ${masking.h2}
+H3 = ${masking.h3}
+H4 = ${masking.h4}
 
 # --- Маскировочные CPS-пакеты ---
 # I1-I5 отправляются по порядку перед реальным WireGuard handshake.
 # <b 0x...> добавляет статические байты, <r N> — N случайных байтов.
 # Значения ниже имитируют начало TLS/QUIC-подобного UDP-обмена.
-I1 = ${I1}
-I2 = ${I2}
-I3 = ${I3}
-I4 = ${I4}
-I5 = ${I5}
+I1 = ${masking.i1}
+I2 = ${masking.i2}
+I3 = ${masking.i3}
+I4 = ${masking.i4}
+I5 = ${masking.i5}
 
-# Init_Packet_Delay намеренно отсутствует: официальные AmneziaWG tools
-# и клиенты не поддерживают такую директиву.
-
+${masking.initPacketDelay === undefined ? '' : `Init_Packet_Delay = ${masking.initPacketDelay}\n`}
 [Peer]
 PublicKey = ${config.server.publicKey}
 ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
@@ -285,11 +296,12 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
     });
   }
 
-  async createClient({ name }) {
+  async createClient({ name, maskingPreset, masking }) {
     if (!name) {
       throw new Error('Missing: Name');
     }
 
+    const normalizedMasking = this.#normalizeMasking({ maskingPreset, masking });
     const config = await this.getConfig();
 
     const privateKey = await Util.exec('wg genkey');
@@ -327,6 +339,7 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
       updatedAt: new Date(),
 
       enabled: true,
+      ...(normalizedMasking ? { masking: normalizedMasking } : {}),
     };
 
     config.clients[id] = client;
@@ -334,6 +347,57 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
     await this.saveConfig();
 
     return client;
+  }
+
+  getMaskingPresets() {
+    return MASKING_PRESETS;
+  }
+
+  #normalizeMasking({ maskingPreset, masking }) {
+    if (!maskingPreset && !masking) return null;
+
+    const preset = maskingPreset
+      ? MASKING_PRESETS.find((item) => item.id === maskingPreset)
+      : null;
+    if (maskingPreset && !preset) {
+      throw new ServerError(`Unknown masking preset: ${maskingPreset}`, 400);
+    }
+    if (masking !== undefined && (masking === null || typeof masking !== 'object' || Array.isArray(masking))) {
+      throw new ServerError('Invalid masking configuration', 400);
+    }
+
+    const source = { ...(preset || {}), ...(masking || {}) };
+    const result = {};
+    const headerPattern = /^\d+(?:-\d+)?$/;
+    const packetPattern = /^(?:\s*<(?:b 0x[0-9a-fA-F]+|r \d+)>\s*)+$/;
+
+    for (const key of ['h1', 'h2', 'h3', 'h4']) {
+      if (source[key] === undefined || source[key] === '') continue;
+      const value = String(source[key]).trim();
+      if (!headerPattern.test(value)) {
+        throw new ServerError(`Invalid ${key.toUpperCase()}`, 400);
+      }
+      result[key] = value;
+    }
+
+    for (const key of ['i1', 'i2', 'i3', 'i4', 'i5']) {
+      if (source[key] === undefined || source[key] === '') continue;
+      const value = String(source[key]).trim();
+      if (!packetPattern.test(value)) {
+        throw new ServerError(`Invalid ${key.toUpperCase()}`, 400);
+      }
+      result[key] = value;
+    }
+
+    if (source.initPacketDelay !== undefined && source.initPacketDelay !== '') {
+      const delay = Number(source.initPacketDelay);
+      if (!Number.isInteger(delay) || delay < 0) {
+        throw new ServerError('Invalid Init_Packet_Delay', 400);
+      }
+      result.initPacketDelay = delay;
+    }
+
+    return Object.keys(result).length ? result : null;
   }
 
   async deleteClient({ clientId }) {

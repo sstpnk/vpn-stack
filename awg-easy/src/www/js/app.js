@@ -61,6 +61,9 @@ new Vue({
     clientDelete: null,
     clientCreate: null,
     clientCreateName: '',
+    clientCreateMaskingPreset: '',
+    clientCreateMasking: {},
+    maskingPresets: [],
     clientEditName: null,
     clientEditNameId: null,
     clientEditAddress: null,
@@ -268,11 +271,38 @@ new Vue({
           alert(err.message || err.toString());
         });
     },
+    openClientCreate() {
+      this.clientCreate = true;
+      this.clientCreateName = '';
+      this.clientCreateMaskingPreset = '';
+      this.clientCreateMasking = {};
+    },
+    selectMaskingPreset() {
+      const preset = this.maskingPresets.find((item) => item.id === this.clientCreateMaskingPreset);
+      this.clientCreateMasking = preset
+        ? {
+          h1: preset.h1,
+          h2: preset.h2,
+          h3: preset.h3,
+          h4: preset.h4,
+          i1: preset.i1,
+          i2: preset.i2,
+          i3: preset.i3,
+          i4: preset.i4,
+          i5: preset.i5,
+          initPacketDelay: preset.initPacketDelay,
+        }
+        : {};
+    },
     createClient() {
       const name = this.clientCreateName;
       if (!name) return;
 
-      this.api.createClient({ name })
+      this.api.createClient({
+        name,
+        maskingPreset: this.clientCreateMaskingPreset || undefined,
+        masking: Object.keys(this.clientCreateMasking).length ? this.clientCreateMasking : undefined,
+      })
         .catch((err) => alert(err.message || err.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
@@ -334,6 +364,11 @@ new Vue({
     this.setTheme(this.uiTheme);
 
     this.api = new API();
+    this.api.getMaskingPresets()
+      .then((presets) => {
+        this.maskingPresets = presets;
+      })
+      .catch((err) => console.error(err));
     this.api.getSession()
       .then((session) => {
         this.authenticated = session.authenticated;
