@@ -445,17 +445,26 @@
                     <div class="client-create-section">
                       <label class="client-create-label">{{$t("customMasking")}}</label>
                       <div class="client-create-header-grid">
-                        <input v-for="key in ['h1', 'h2', 'h3', 'h4']" :key="key"
-                          v-model.trim="clientCreateMasking[key]" @input="markMaskingChanged"
-                          :placeholder="key.toUpperCase()" class="client-create-control" />
+                        <label v-for="key in ['h1', 'h2', 'h3', 'h4']" :key="key"
+                          class="client-create-field">
+                          <span class="client-create-field-label">{{key.toUpperCase()}}</span>
+                          <input v-model.trim="clientCreateMasking[key]" @input="markMaskingChanged"
+                            :placeholder="key.toUpperCase()" class="client-create-control" />
+                        </label>
                       </div>
                       <div class="client-create-packet-list">
-                        <input v-for="key in ['i1', 'i2', 'i3', 'i4', 'i5']" :key="key"
-                          v-model.trim="clientCreateMasking[key]" @input="markMaskingChanged"
-                          :placeholder="key.toUpperCase()" class="client-create-control client-create-code" />
-                        <input v-model.trim="clientCreateMasking.initPacketDelay" @input="markMaskingChanged"
-                          type="text" inputmode="numeric" pattern="[0-9]*" :placeholder="$t('initPacketDelay')"
-                          class="client-create-control" />
+                        <label v-for="key in ['i1', 'i2', 'i3', 'i4', 'i5']" :key="key"
+                          class="client-create-field">
+                          <span class="client-create-field-label">{{key.toUpperCase()}}</span>
+                          <input v-model.trim="clientCreateMasking[key]" @input="markMaskingChanged"
+                            :placeholder="key.toUpperCase()" class="client-create-control client-create-code" />
+                        </label>
+                        <label class="client-create-field">
+                          <span class="client-create-field-label">{{$t("initPacketDelay")}}</span>
+                          <input v-model.trim="clientCreateMasking.initPacketDelay" @input="markMaskingChanged"
+                            type="text" inputmode="numeric" pattern="[0-9]*" :placeholder="$t('initPacketDelay')"
+                            class="client-create-control" />
+                        </label>
                       </div>
                     </div>
                   </div>
