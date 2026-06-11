@@ -2,6 +2,9 @@
 
 [Русский](#русский) | [English](#english) | [简体中文](#简体中文)
 
+Current release: **v1.0.0**. See [CHANGELOG.md](CHANGELOG.md) and
+[release notes](docs/releases/v1.0.0.md).
+
 ## Русский
 
 Готовая Docker-сборка для развёртывания личного VPN на VPS. Основной
