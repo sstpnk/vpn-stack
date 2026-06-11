@@ -22,6 +22,7 @@ const {
 } = require('h3');
 
 const WireGuard = require('../services/WireGuard');
+const MASKING_PRESETS = require('./MaskingPresets');
 
 const {
   CHECK_UPDATE,
@@ -32,6 +33,15 @@ const {
   LANG,
   UI_TRAFFIC_STATS,
   UI_CHART_TYPE,
+  H1,
+  H2,
+  H3,
+  H4,
+  I1,
+  I2,
+  I3,
+  I4,
+  I5,
 } = require('../config');
 
 module.exports = class Server {
@@ -73,6 +83,26 @@ module.exports = class Server {
       .get('/api/ui-chart-type', defineEventHandler((event) => {
         setHeader(event, 'Content-Type', 'application/json');
         return `"${UI_CHART_TYPE}"`;
+      }))
+      .get('/api/wireguard/masking-presets', defineEventHandler(() => {
+        return {
+          defaults: {
+            id: 'system-defaults',
+            name: 'System defaults',
+            description: 'Текущие параметры сервера',
+            h1: H1,
+            h2: H2,
+            h3: H3,
+            h4: H4,
+            i1: I1,
+            i2: I2,
+            i3: I3,
+            i4: I4,
+            i5: I5,
+            initPacketDelay: '',
+          },
+          presets: MASKING_PRESETS.map((preset) => ({ ...preset })),
+        };
       }))
 
       // Authentication
@@ -123,9 +153,11 @@ module.exports = class Server {
           return next();
         }
 
-        return res.status(401).json({
+        res.statusCode = 401;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({
           error: 'Not Logged In',
-        });
+        }));
       }),
     );
 
@@ -143,9 +175,6 @@ module.exports = class Server {
       }))
       .get('/api/wireguard/client', defineEventHandler(() => {
         return WireGuard.getClients();
-      }))
-      .get('/api/wireguard/masking-presets', defineEventHandler(() => {
-        return WireGuard.getMaskingPresets();
       }))
       .get('/api/wireguard/client/:clientId/qrcode.svg', defineEventHandler(async (event) => {
         const clientId = getRouterParam(event, 'clientId');
