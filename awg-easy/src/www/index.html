@@ -91,7 +91,7 @@
               <p class="text-2xl font-medium dark:text-neutral-200">{{$t("clients")}}</p>
             </div>
             <div class="flex-shrink-0">
-              <button @click="clientCreate = true; clientCreateName = '';"
+              <button @click="openClientCreate"
                 class="hover:bg-red-800 hover:border-red-800 hover:text-white text-gray-700 dark:text-neutral-200 border-2 border-gray-100 dark:border-neutral-600 py-2 px-4 rounded inline-flex items-center transition">
                 <svg class="w-4 mr-2" inline xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
@@ -338,7 +338,7 @@
             <div v-if="clients && clients.length === 0">
               <p class="text-center m-10 text-gray-400 dark:text-neutral-400 text-sm">
                 {{$t("noClients")}}<br /><br />
-                <button @click="clientCreate = true; clientCreateName = '';"
+                <button @click="openClientCreate"
                   class="bg-red-800 hover:bg-red-700 text-white border-2 border-none py-2 px-4 rounded inline-flex items-center transition">
                   <svg class="w-4 mr-2" inline xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -408,7 +408,7 @@
           To: "opacity-0 tranneutral-y-4 sm:tranneutral-y-0 sm:scale-95"
       -->
             <div
-              class="inline-block align-bottom bg-white dark:bg-neutral-700 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full"
+              class="inline-block align-bottom bg-white dark:bg-neutral-700 rounded-lg text-left overflow-y-auto max-h-screen shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full"
               role="dialog" aria-modal="true" aria-labelledby="modal-headline">
               <div class="bg-white dark:bg-neutral-700 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div class="sm:flex sm:items-start">
@@ -430,6 +430,36 @@
                           class="rounded p-2 border-2 dark:bg-neutral-700 dark:text-neutral-200 border-gray-100 dark:border-neutral-600 focus:border-gray-200 focus:dark:border-neutral-500 dark:placeholder:text-neutral-400 outline-none w-full"
                           type="text" v-model.trim="clientCreateName" :placeholder="$t('name')" />
                       </p>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-neutral-200">
+                        {{$t("maskingPreset")}}
+                      </label>
+                      <select v-model="clientCreateMaskingPreset" @change="selectMaskingPreset"
+                        class="rounded p-2 border-2 dark:bg-neutral-700 dark:text-neutral-200 border-gray-100 dark:border-neutral-600 outline-none w-full">
+                        <option value="">{{$t("serverDefaults")}}</option>
+                        <option v-for="preset in maskingPresets" :key="preset.id" :value="preset.id">
+                          {{preset.name}}
+                        </option>
+                      </select>
+                      <details>
+                        <summary class="cursor-pointer text-sm text-gray-700 dark:text-neutral-200">
+                          {{$t("customMasking")}}
+                        </summary>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                          <input v-for="key in ['h1', 'h2', 'h3', 'h4']" :key="key"
+                            v-model.trim="clientCreateMasking[key]" :placeholder="key.toUpperCase()"
+                            class="rounded p-2 border-2 dark:bg-neutral-700 dark:text-neutral-200 border-gray-100 dark:border-neutral-600 outline-none w-full" />
+                        </div>
+                        <div class="space-y-2 mt-2">
+                          <input v-for="key in ['i1', 'i2', 'i3', 'i4', 'i5']" :key="key"
+                            v-model.trim="clientCreateMasking[key]" :placeholder="key.toUpperCase()"
+                            class="rounded p-2 border-2 dark:bg-neutral-700 dark:text-neutral-200 border-gray-100 dark:border-neutral-600 outline-none w-full font-mono text-xs" />
+                          <input v-model.number="clientCreateMasking.initPacketDelay" type="number" min="0"
+                            :placeholder="$t('initPacketDelay')"
+                            class="rounded p-2 border-2 dark:bg-neutral-700 dark:text-neutral-200 border-gray-100 dark:border-neutral-600 outline-none w-full" />
+                        </div>
+                      </details>
                     </div>
                   </div>
                 </div>

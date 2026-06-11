@@ -1,118 +1,37 @@
 # VPN Stack: AmneziaWG + Xray Reality + Telegram Bot
 
-Готовая Docker-сборка для развёртывания личного VPN на VPS. Основной
-протокол — AmneziaWG с обфускацией UDP-трафика; Xray Reality можно
-использовать как резервный вариант.
+[Русский](#русский) | [English](#english) | [简体中文](#简体中文)
 
-## Что входит в стек
+## Русский
 
-- **AmneziaWG Easy** — VPN-сервер и веб-интерфейс управления peer-ами.
-- **Xray Reality** — резервный VLESS Reality-сервер на TCP-порту 8443.
-- **Telegram-бот** — создание, поиск и удаление peer-ов, выдача готовых
-  клиентских конфигураций.
-- **Split tunneling** — клиентский конфиг направляет публичный IPv4-трафик
-  через VPN, но не перехватывает локальные сети `10.0.0.0/8`,
-  `172.16.0.0/12` и `192.168.0.0/16`.
+Готовый Docker-стек для личного VPN на VPS:
 
-## Требования
+- **AmneziaWG Easy**: AmneziaWG-сервер и веб-панель управления peer-ами.
+- **Xray Reality**: резервный VLESS Reality-сервер.
+- **Telegram-бот**: создание, поиск, переименование и удаление клиентов, выдача конфигураций.
+- **Split tunneling**: публичный IPv4-трафик идёт через VPN, локальные сети остаются доступными напрямую.
 
-- VPS с публичным IPv4-адресом.
+### Требования
+
 - Ubuntu 22.04/24.04 или Debian 12.
-- Доступ по SSH с пользователем, имеющим `sudo`.
+- Публичный IPv4, SSH и пользователь с `sudo`.
 - Рекомендуемый минимум: 1 vCPU, 1 ГБ RAM, 10 ГБ диска.
-- Открытые порты:
+- Открытые порты: `51820/udp` для AmneziaWG и `8443/tcp` для Xray.
 
-| Порт | Протокол | Назначение |
-|------|----------|------------|
-| `22` | TCP | SSH; замените, если SSH работает на другом порту |
-| `51820` | UDP | AmneziaWG |
-| `8443` | TCP | Xray Reality |
-| `51821` | TCP | веб-интерфейс; рекомендуется только локальный доступ через SSH |
+Веб-панель использует `51821/tcp`. Не публикуйте её без необходимости: безопаснее привязать порт к `127.0.0.1` и открывать через SSH-туннель.
 
-Публичные порты `22/tcp`, `51820/udp` и `8443/tcp` нужно разрешить и в firewall
-операционной системы, и в firewall/security group панели VPS-провайдера.
-
-> Веб-интерфейс на порту `51821` работает по HTTP. Не оставляйте его открытым
-> всему интернету. Рекомендуемый вариант — привязать порт к `127.0.0.1` и
-> использовать SSH-туннель.
-
-## Пошаговое развёртывание на VPS
-
-### 1. Подключитесь к серверу
+### Установка
 
 ```bash
-ssh root@SERVER_IP
-```
-
-Если используется обычный пользователь:
-
-```bash
-ssh username@SERVER_IP
-sudo -i
-```
-
-### 2. Настройте firewall
-
-Пример для UFW с портами по умолчанию:
-
-```bash
-apt update
-apt install -y ufw
-ufw allow OpenSSH
-ufw allow 51820/udp
-ufw allow 8443/tcp
-ufw enable
-ufw status
-```
-
-Docker может самостоятельно добавлять правила перенаправления трафика, поэтому
-для опубликованных контейнерных портов не следует полагаться только на UFW.
-Если нужен прямой доступ к панели, ограничьте TCP-порт `51821` также в
-firewall/security group VPS-провайдера.
-
-### 3. Клонируйте репозиторий
-
-```bash
-apt update
-apt install -y git curl
 git clone https://github.com/sstpnk/vpn-stack.git
 cd vpn-stack
 chmod +x setup.sh
+sudo ./setup.sh
 ```
 
-До первого запуска измените публикацию веб-интерфейса в
-`docker-compose.yml`:
+Скрипт установит Docker при необходимости, создаст `.env`, подготовит Xray Reality и запустит контейнеры.
 
-```yaml
-ports:
-  - "${WG_PORT:-51820}:${WG_PORT:-51820}/udp"
-  - "127.0.0.1:51821:51821/tcp"
-```
-
-### 4. Запустите установку
-
-```bash
-./setup.sh
-```
-
-Скрипт:
-
-1. Проверит Docker и при необходимости установит его.
-2. Запросит IP сервера, пароль веб-интерфейса и порты.
-3. Опционально запросит токен Telegram-бота и разрешённый username.
-4. Создаст `.env`.
-5. Сгенерирует конфигурацию Xray Reality.
-6. Соберёт и запустит контейнеры.
-
-Если Docker был установлен впервые, скрипт может попросить выйти из SSH-сессии
-и войти снова. После повторного входа снова выполните:
-
-```bash
-cd vpn-stack
-./setup.sh
-```
-
-### 5. Проверьте запуск
+Проверка:
 
 ```bash
 docker compose ps
@@ -121,446 +40,340 @@ docker compose logs --tail=100 vpn-bot
 docker compose logs --tail=100 xray
 ```
 
-Все контейнеры должны иметь состояние `Up`. Для проверки открытых портов:
+Доступ к локально опубликованной панели:
 
 ```bash
-ss -lntup | grep -E ':(8443|51820|51821)\b'
+ssh -L 51821:127.0.0.1:51821 user@SERVER_IP
 ```
 
-Чтобы открыть закрытый веб-интерфейс, создайте SSH-туннель со своего
-компьютера:
+Откройте `http://127.0.0.1:51821`.
+
+### Основные переменные `.env`
+
+| Переменная | Назначение |
+|---|---|
+| `WG_HOST` | публичный IP или DNS-имя сервера |
+| `WG_PORT` | UDP-порт AmneziaWG, обычно `51820` |
+| `PASSWORD` | пароль веб-панели |
+| `WG_DEFAULT_DNS` | DNS в клиентских конфигурациях |
+| `WG_ALLOWED_IPS` | маршруты клиента |
+| `WG_MTU` | MTU клиента |
+| `AMNEZIA_JC`, `AMNEZIA_JMIN`, `AMNEZIA_JMAX` | параметры junk-пакетов |
+| `AMNEZIA_S1`, `AMNEZIA_S2` | размеры дополнения handshake |
+| `AMNEZIA_H1`...`AMNEZIA_H4` | глобальные значения заголовков |
+| `AMNEZIA_I1`...`AMNEZIA_I5` | глобальные CPS-пакеты |
+| `BOT_TOKEN` | токен Telegram-бота |
+| `BOT_ALLOWED_USER` | разрешённый Telegram username |
+
+После изменения серверных параметров пересоздайте клиентские конфигурации и перезапустите стек:
 
 ```bash
-ssh -L 51821:127.0.0.1:51821 username@SERVER_IP
+docker compose up -d --build
 ```
 
-Пока SSH-сессия открыта, панель доступна по адресу
-`http://127.0.0.1:51821`.
+Не редактируйте `data/wireguard/wg0.json` вручную без резервной копии: файл содержит ключи и peer-ы.
 
-## Настройка `.env`
+### Создание peer в веб-панели
 
-`setup.sh` создаёт базовый `.env`. Дополнительные параметры можно дописать
-вручную:
+В окне **New Client** укажите имя и выберите:
 
-```dotenv
-# Публичный адрес и порты VPS
-WG_HOST=203.0.113.10
-WG_EASY_PASSWORD=replace_with_a_long_random_password
-WG_PORT=51820
-WG_MTU=1280
-WG_PERSISTENT_KEEPALIVE=25
-# Пустое значение использует split-маршруты из локального fork-а
-WG_ALLOWED_IPS=
-XRAY_PORT=8443
-XRAY_PUBLIC_HOST=
-XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=randomized
+- **Server defaults**: глобальные `H1-H4` и `I1-I5`.
+- Один из 11 готовых шаблонов.
+- Готовый шаблон с ручной корректировкой полей.
+- Полностью пользовательскую комбинацию `H1-H4`, `I1-I5` и `Init_Packet_Delay`.
 
-# Параметры AmneziaWG
-AMNEZIA_JC=10
-AMNEZIA_JMIN=64
-AMNEZIA_JMAX=200
-AMNEZIA_S1=64
-AMNEZIA_S2=64
-AMNEZIA_H1=1000-12999
-AMNEZIA_H2=13000-24999
-AMNEZIA_H3=25000-36999
-AMNEZIA_H4=37000-50000
-AMNEZIA_I1='<b 0x160301>'
-AMNEZIA_I2='<r 3><b 0x0303><r 32>'
-AMNEZIA_I3='<b 0x00><r 5>'
-AMNEZIA_I4='<r 40>'
-AMNEZIA_I5='<b 0xC0000000><r 8><b 0x04><r 100>'
+Значения сохраняются отдельно для peer-а в `wg0.json` и используются в скачиваемом `.conf` и QR-коде. Пустые поля наследуют глобальные значения сервера.
 
-# Telegram-бот
-BOT_TOKEN=123456789:replace_with_botfather_token
-ALLOWED_USERNAMES=your_telegram_username
+Доступные шаблоны:
 
-# Убирает предупреждение buildx в некоторых версиях Docker Compose
-DOCKER_COMPOSE_EXPERIMENTAL=false
-```
+| Шаблон | Профиль |
+|---|---|
+| YouTube Consumer | потоковое видео и крупные буферы |
+| Zoom Meeting | STUN и частые аудио/видео-фреймы |
+| Discord Voice | VoIP, WebSocket и небольшие сообщения |
+| Cloudflare WARP / 1.1.1.1 | короткие DNS-over-TLS-подобные сессии |
+| Steam Download | крупные пакеты и высокая пропускная способность |
+| Gosuslugi / ESIA | короткие REST-подобные запросы |
+| Mail.ru / VK Mail | фоновая почтовая синхронизация |
+| Yandex Weather / News | короткие периодические всплески |
+| VTB / Sberbank Online | пакеты разного размера и увеличенная задержка старта |
+| Wildberries / Ozon | смешанный e-commerce-профиль |
+| GitHub / Habr | API, Git и длинные сессии |
 
-После изменения `.env` пересоздайте контейнеры:
+`I1-I5` принимают последовательности вида `<b 0x160303><r 64>`. `Init_Packet_Delay` должен быть целым неотрицательным числом. Используемый клиент AmneziaWG должен поддерживать эту директиву; иначе удалите её из конфигурации или выберите параметры сервера.
+
+Шаблоны лишь формируют профиль пакетов. Они не гарантируют доступность сервиса или обход ограничений в конкретной сети.
+
+### Telegram-бот
+
+После запуска отправьте боту `/start`. Бот умеет управлять AmneziaWG peer-ами и VLESS Reality-клиентами. Доступ ограничивается переменной `BOT_ALLOWED_USER`.
+
+Для каждого устройства создавайте отдельный peer. При утечке конфигурации удалите соответствующий peer и создайте новый.
+
+### Обновление
 
 ```bash
-docker compose up -d --build --force-recreate
-```
-
-### Что означают параметры
-
-| Переменная | Значение по умолчанию | Назначение |
-|------------|-----------------------|------------|
-| `WG_HOST` | нет | публичный IPv4 или доменное имя VPS |
-| `WG_EASY_PASSWORD` | нет | пароль веб-интерфейса |
-| `WG_PORT` | `51820` | внешний UDP-порт AmneziaWG; после изменения проверьте `Endpoint` |
-| `WG_MTU` | `1280` | MTU, добавляемый сервером в клиентский конфиг |
-| `WG_PERSISTENT_KEEPALIVE` | `25` | интервал keepalive клиента в секундах |
-| `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
-| `XRAY_PORT` | `8443` | внешний TCP-порт Xray Reality |
-| `XRAY_PUBLIC_HOST` | `WG_HOST` | адрес, используемый в VLESS-ссылках |
-| `XRAY_SERVER_NAME` | `www.google.com` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
-| `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint в клиентских VLESS-профилях |
-| `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
-| `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
-| `AMNEZIA_JMAX` | `200` | максимальный размер мусорного пакета в байтах |
-| `AMNEZIA_S1`, `AMNEZIA_S2` | `64`, `64` | padding пакетов Init и Response |
-| `AMNEZIA_H1`...`AMNEZIA_H4` | см. пример | непересекающиеся диапазоны заголовков пакетов |
-| `AMNEZIA_I1`...`AMNEZIA_I5` | см. пример | CPS-пакеты с байтами и случайными фрагментами |
-| `BOT_TOKEN` | пусто | токен, полученный у `@BotFather` |
-| `ALLOWED_USERNAMES` | пусто | Telegram username без `@`; несколько имён через запятую |
-
-Локальный fork AmneziaWG Easy получает все эти значения из `.env` через
-`docker-compose.yml` и добавляет их непосредственно при генерации `.conf`.
-Поэтому веб-интерфейс, QR-код и Telegram-бот возвращают одинаковую
-конфигурацию с `J*`, `S*`, `H*`, `I1`–`I5`, `MTU` и split `AllowedIPs`.
-Скачиваемый файл содержит комментарии, поясняющие назначение параметров.
-Директива `Init_Packet_Delay` не добавляется: официальные AmneziaWG tools и
-клиенты её не поддерживают.
-
-Параметры сервера сохраняются в `data/wg-easy/wg0.json` при первом запуске.
-Если изменить `Jc`, `Jmin`, `Jmax`, `S1`, `S2` или `H1`–`H4` для уже
-инициализированного сервера, одного пересоздания контейнера недостаточно:
-старые серверные значения останутся в сохранённой конфигурации. Не удаляйте
-`wg0.json` без резервной копии, поскольку там находятся ключи и peer-ы.
-
-## Настройка Telegram-бота
-
-1. Откройте [@BotFather](https://t.me/BotFather).
-2. Выполните `/newbot` и сохраните выданный токен.
-3. Укажите токен в `BOT_TOKEN`.
-4. Укажите свой Telegram username без `@` в `ALLOWED_USERNAMES`.
-5. Перезапустите сервис:
-
-```bash
-docker compose up -d --build vpn-bot
-docker compose logs -f vpn-bot
-```
-
-После запуска отправьте боту `/start`. Через меню можно управлять peer-ами
-AmneziaWG и VLESS Reality-подключениями.
-
-Команды VLESS:
-
-| Команда | Действие |
-|---------|----------|
-| `/vless_create [имя]` | создать подключение; без имени бот запросит его отдельно |
-| `/vless_list` | показать существующие VLESS-ссылки |
-| `/vless_delete` | выбрать и удалить подключение |
-
-При создании бот отправляет стандартную `vless://` ссылку и отдельный
-клиентский JSON для Xray/NekoBox с рекомендуемыми параметрами Mux.
-
-## Создание клиентской конфигурации
-
-Для каждого устройства создавайте отдельный peer. Не используйте один и тот же
-файл одновременно на телефоне и компьютере: у них будет одинаковый ключ и
-внутренний адрес, что приводит к нестабильным подключениям.
-
-### Рекомендуемый способ: через Telegram-бота
-
-1. Отправьте боту `/start`.
-2. Нажмите **Create Peer**.
-3. Введите понятное имя, например `sergey-windows` или `iphone`.
-4. Бот создаст peer и отправит файл `.conf`.
-5. Бот скачает готовый серверный конфиг с `MTU`, `I1`–`I5` и маршрутами,
-   исключающими частные локальные сети.
-
-Пример основных частей полученного файла:
-
-```ini
-[Interface]
-PrivateKey = CLIENT_PRIVATE_KEY
-Address = 10.8.0.2/24
-DNS = 1.1.1.1
-MTU = 1280
-
-# --- Транспортная маскировка ---
-Jc = 10
-Jmin = 64
-Jmax = 200
-S1 = 64
-S2 = 64
-
-# --- Динамические заголовки пакетов ---
-H1 = 1000-12999
-H2 = 13000-24999
-H3 = 25000-36999
-H4 = 37000-50000
-
-# --- Маскировочные CPS-пакеты ---
-I1 = <b 0x160301>
-I2 = <r 3><b 0x0303><r 32>
-I3 = <b 0x00><r 5>
-I4 = <r 40>
-I5 = <b 0xC0000000><r 8><b 0x04><r 100>
-
-[Peer]
-PublicKey = SERVER_PUBLIC_KEY
-AllowedIPs = 0.0.0.0/5, 8.0.0.0/7, 11.0.0.0/8, ...
-Endpoint = 203.0.113.10:51820
-PersistentKeepalive = 25
-```
-
-Фактические ключи, адрес и набор серверных параметров будут другими.
-
-### Через веб-интерфейс
-
-1. Откройте `http://SERVER_IP:51821` либо
-   `http://127.0.0.1:51821` через SSH-туннель.
-2. Войдите с паролем `WG_EASY_PASSWORD`.
-3. Создайте клиента и скачайте `.conf` или покажите QR-код.
-
-Конфиг из веб-интерфейса, QR-код и файл из Telegram-бота генерируются одним
-кодом и содержат одинаковые параметры обфускации, MTU и маршруты.
-
-> Файл `.conf` содержит приватный ключ. Не публикуйте его, не отправляйте
-> через открытые чаты и удалите peer в случае утечки.
-
-## Подключение Windows
-
-### VeilBox
-
-[VeilBox](https://www.veilbox.site/) поддерживает Windows 10/11, VLESS Reality
-и AmneziaWG.
-
-1. Скачайте установщик с официального сайта или со страницы
-   [GitHub Releases](https://github.com/artem4150/VeilBox/releases).
-2. Установите и запустите VeilBox.
-3. Выберите импорт конфигурации/профиля.
-4. Укажите полученный `.conf` либо вставьте его содержимое.
-5. Выберите созданный профиль и включите подключение.
-6. Разрешите создание VPN/TUN-интерфейса, если Windows запросит права
-   администратора.
-
-Маршруты для локальных сетей уже исключены из `AllowedIPs` в конфиге,
-полученном от бота. Не включайте дополнительный full-tunnel override, если
-нужен доступ к принтерам, NAS и другим устройствам LAN.
-
-Альтернативный клиент:
-[официальный AmneziaWG для Windows](https://github.com/amnezia-vpn/amneziawg-windows-client/releases).
-В нём выберите **Import tunnel(s) from file**, укажите `.conf` и активируйте
-туннель.
-
-## Подключение macOS
-
-Для macOS доступны два варианта:
-
-- [VeilBox](https://www.veilbox.site/) — beta-версия для Mac с Apple Silicon.
-- [AmneziaWG в App Store](https://apps.apple.com/us/app/amneziawg/id6478942365)
-  — официальный клиент для macOS 12 и новее.
-
-### VeilBox на Apple Silicon
-
-1. Скачайте `.dmg` с сайта VeilBox.
-2. Перенесите приложение в `Applications` и запустите его.
-3. Импортируйте файл `.conf`.
-4. Разрешите macOS добавить VPN-конфигурацию.
-5. Выберите профиль и включите подключение.
-
-На Intel Mac используйте официальный AmneziaWG, поскольку desktop beta
-VeilBox предназначена для Apple Silicon.
-
-### Официальный AmneziaWG
-
-1. Установите приложение из App Store.
-2. Передайте `.conf` на Mac безопасным способом.
-3. Импортируйте туннель из файла.
-4. Подтвердите добавление VPN-конфигурации в macOS.
-5. Активируйте туннель.
-
-## Подключение iPhone и iPad
-
-1. Установите
-   [AmneziaWG из App Store](https://apps.apple.com/us/app/amneziawg/id6478942365).
-2. Скачайте `.conf` из Telegram прямо на устройство либо передайте его через
-   AirDrop.
-3. Откройте файл в AmneziaWG или выберите импорт туннеля из файла внутри
-   приложения.
-4. Разрешите iOS добавить VPN-конфигурацию.
-5. Включите переключатель туннеля.
-
-Можно импортировать конфигурацию по QR-коду из веб-интерфейса, но показывайте
-QR только в доверенной среде: он содержит тот же приватный ключ, что и `.conf`.
-
-## Подключение Android через WG Tunnel
-
-[WG Tunnel](https://wgtunnel.com/) — открытый клиент WireGuard/AmneziaWG для
-Android с импортом `.conf`, QR-кодов и настройками автоподключения.
-
-1. Установите приложение с
-   [официальной страницы загрузки](https://wgtunnel.com/download/) или из
-   Google Play.
-2. На главном экране нажмите `+`.
-3. Выберите импорт из `.conf` и укажите файл, полученный от бота. Также можно
-   использовать QR-код или вставку из буфера обмена.
-4. Оставьте режим **VPN/Userspace**: root для обычной работы не нужен.
-5. Включите туннель и подтвердите системный запрос Android на создание VPN.
-
-WG Tunnel автоматически использует AmneziaWG backend, если в конфигурации есть
-параметры Amnezia. Не включайте **Kernel mode** для AmneziaWG: этот режим
-предназначен для kernel WireGuard и требует root.
-
-Для автоподключения можно назначить туннель основным, включить **Start on
-Boot**, **Always-on VPN** или правила Auto-Tunneling. Настройки split tunneling
-по приложениям в WG Tunnel дополняют IP-маршруты из `AllowedIPs`.
-
-## Проверка подключения
-
-После включения VPN на клиенте:
-
-1. Откройте сайт проверки IP, например `https://ifconfig.me`.
-2. Убедитесь, что отображается публичный IP вашего VPS.
-3. Проверьте доступ к локальному роутеру, NAS или принтеру.
-4. На сервере проверьте состояние контейнера:
-
-```bash
-docker compose logs --tail=100 wg-easy
-```
-
-Состояние peer-ов, последний handshake и счётчики трафика смотрите в
-Telegram-боте или веб-интерфейсе.
-
-## Обновление и обслуживание
-
-Обновить исходный код и пересоздать контейнеры:
-
-```bash
-cd vpn-stack
-git pull --ff-only
-docker compose pull --ignore-buildable
+git pull
 docker compose up -d --build
 docker image prune -f
 ```
 
-Основные команды:
-
-| Команда | Описание |
-|---------|----------|
-| `docker compose ps` | состояние контейнеров |
-| `docker compose logs -f` | логи всех сервисов |
-| `docker compose restart vpn-bot` | перезапустить бота |
-| `docker compose down` | остановить стек |
-| `docker compose up -d` | запустить стек |
-
-Данные AmneziaWG хранятся в `data/wg-easy`. Для резервной копии сохраните
-`.env`, `data/wg-easy` и `xray-config/config.json` в защищённом месте.
-
-## Диагностика
-
-### Клиент импортируется, но не подключается
-
-- Проверьте, что UDP-порт `WG_PORT` открыт у VPS-провайдера и в UFW.
-- Сверьте `Endpoint` в `.conf` с публичным IP и портом сервера.
-- Убедитесь, что серверные и клиентские параметры `Jc/Jmin/Jmax/S1/S2/H1-H4`
-  совпадают.
-- Проверьте время на VPS: `timedatectl status`.
-- Посмотрите логи: `docker compose logs -f wg-easy`.
-
-### VPN подключён, но сайты не открываются
-
-- Попробуйте уменьшить `WG_MTU`, например до `1240`, и пересоздать сервер:
+Перед обновлением сохраните резервную копию:
 
 ```bash
-sed -i 's/^WG_MTU=.*/WG_MTU=1240/' .env
-docker compose up -d --build --force-recreate wg-easy
+tar -czf vpn-stack-backup.tar.gz .env data xray-config
 ```
 
-- Скачайте конфиг заново через web или бота, чтобы новое значение попало
-  в `.conf`.
-- Проверьте DNS в секции `[Interface]`.
+### Диагностика
 
-### Не открывается локальная сеть
-
-- Проверьте, что `AllowedIPs` не содержит `0.0.0.0/0`.
-- В WG Tunnel не включайте Lockdown без опции **Allow LAN Traffic**.
-- Проверьте, не пересекается ли VPN-подсеть с домашней подсетью.
-
-### Telegram-бот не отвечает
-
-- Проверьте `BOT_TOKEN`.
-- Проверьте точное значение `ALLOWED_USERNAMES` без `@`.
-- У пользователя Telegram должен быть задан публичный username.
-- Выполните `docker compose logs -f vpn-bot`.
-
-## Xray Reality
-
-Xray Reality работает как резервный транспорт. Клиент должен поддерживать
-VLESS Reality и flow `xtls-rprx-vision`.
-
-Новая установка использует `www.google.com:443` как Reality target и разрешает SNI
-`www.google.com`. Для уже существующей установки бот читает
-фактический `serverNames` из `xray-config/config.json` и использует разрешённое
-значение в ссылке. Это не ломает ранее созданные подключения при обновлении
-бота.
-
-`www.google.com` является настраиваемым default, а не универсально лучшим target.
-Официальная рекомендация Xray — выбирать доступный TLS-сайт по возможности в
-том же ASN, что и VPS. Не меняйте `target/serverNames` у работающего сервера без
-плана обновления существующих клиентов.
-
-Пример генерируемой ссылки:
-
-```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+```bash
+docker compose ps
+docker compose logs --tail=200 wg-easy
+docker compose logs --tail=200 vpn-bot
+docker compose logs --tail=200 xray
+sudo ss -lntup
 ```
 
-Для каждого подключения бот:
+Если peer не подключается, проверьте UDP-порт, endpoint, время на сервере, поддержку параметров клиентом и отсутствие пересечений значений `H1-H4`.
 
-- создаёт отдельный UUID с flow `xtls-rprx-vision`;
-- создаёт отдельный 8-символьный hex `shortId`;
-- вычисляет public key из существующего Reality private key, не меняя пару;
-- формирует ссылку с согласованным SNI;
-- использует `spiderX=/`, как в клиентском шаблоне;
-- формирует клиентский JSON с `concurrency=8`, `xudpConcurrency=8` и
-  `xudpProxyUDP443=reject`.
+---
 
-Перед изменением бот сохраняет старый `config.json`, проверяет новый командой
-`xray run -test`, атомарно заменяет файл и перезапускает только контейнер
-`vpn-xray`. Если проверка или запуск не удались, прежняя конфигурация
-восстанавливается.
+## English
 
-Поле `mux` не входит в формат стандартной VLESS-ссылки. Поэтому оно содержится
-только в отдельном JSON-файле, который бот отправляет при создании подключения.
-Повторный запуск `setup.sh` сохраняет существующие Reality-ключи и VLESS-клиентов.
+A Docker-based personal VPN stack for a VPS:
 
-## Структура проекта
+- **AmneziaWG Easy**: AmneziaWG server with a web administration panel.
+- **Xray Reality**: fallback VLESS Reality server.
+- **Telegram bot**: client creation, search, rename, deletion, and configuration delivery.
+- **Split tunneling**: public IPv4 traffic uses the VPN while private networks remain local.
+
+### Requirements
+
+- Ubuntu 22.04/24.04 or Debian 12.
+- Public IPv4, SSH access, and a user with `sudo`.
+- Recommended minimum: 1 vCPU, 1 GB RAM, 10 GB disk.
+- Open `51820/udp` for AmneziaWG and `8443/tcp` for Xray.
+
+The web panel listens on `51821/tcp`. Prefer binding it to `127.0.0.1` and accessing it through an SSH tunnel.
+
+### Installation
+
+```bash
+git clone https://github.com/sstpnk/vpn-stack.git
+cd vpn-stack
+chmod +x setup.sh
+sudo ./setup.sh
+```
+
+The setup script installs Docker when needed, creates `.env`, prepares Xray Reality, and starts the containers.
+
+```bash
+docker compose ps
+docker compose logs --tail=100 wg-easy
+docker compose logs --tail=100 vpn-bot
+docker compose logs --tail=100 xray
+```
+
+For a locally bound web panel:
+
+```bash
+ssh -L 51821:127.0.0.1:51821 user@SERVER_IP
+```
+
+Then open `http://127.0.0.1:51821`.
+
+### Main `.env` variables
+
+| Variable | Purpose |
+|---|---|
+| `WG_HOST` | public server IP or hostname |
+| `WG_PORT` | AmneziaWG UDP port, normally `51820` |
+| `PASSWORD` | web panel password |
+| `WG_DEFAULT_DNS` | DNS written to client configurations |
+| `WG_ALLOWED_IPS` | client routes |
+| `WG_MTU` | client MTU |
+| `AMNEZIA_JC`, `AMNEZIA_JMIN`, `AMNEZIA_JMAX` | junk packet settings |
+| `AMNEZIA_S1`, `AMNEZIA_S2` | handshake padding |
+| `AMNEZIA_H1`...`AMNEZIA_H4` | global header values |
+| `AMNEZIA_I1`...`AMNEZIA_I5` | global CPS packets |
+| `BOT_TOKEN` | Telegram bot token |
+| `BOT_ALLOWED_USER` | allowed Telegram username |
+
+After changing server parameters, rebuild the stack and regenerate client configurations:
+
+```bash
+docker compose up -d --build
+```
+
+Do not edit `data/wireguard/wg0.json` without a backup. It contains private keys and peer records.
+
+### Creating a peer in the web panel
+
+In **New Client**, enter a name and choose:
+
+- **Server defaults**.
+- One of the 11 built-in traffic profiles.
+- A preset followed by manual field changes.
+- A fully custom `H1-H4`, `I1-I5`, and `Init_Packet_Delay` combination.
+
+Per-peer values are stored in `wg0.json` and used for downloaded configurations and QR codes. Empty fields inherit global server values.
+
+Available profiles: YouTube Consumer, Zoom Meeting, Discord Voice, Cloudflare WARP / 1.1.1.1, Steam Download, Gosuslugi / ESIA, Mail.ru / VK Mail, Yandex Weather / News, VTB / Sberbank Online, Wildberries / Ozon, and GitHub / Habr.
+
+`I1-I5` use expressions such as `<b 0x160303><r 64>`. `Init_Packet_Delay` must be a non-negative integer. The client application must support this directive; otherwise remove it or use server defaults.
+
+Profiles only shape packet characteristics. They do not guarantee service availability or restriction bypassing on any specific network.
+
+### Telegram bot
+
+Send `/start` after deployment. Access is restricted by `BOT_ALLOWED_USER`. Create a separate peer for every device and revoke a peer immediately if its configuration is exposed.
+
+### Update and backup
+
+```bash
+tar -czf vpn-stack-backup.tar.gz .env data xray-config
+git pull
+docker compose up -d --build
+docker image prune -f
+```
+
+### Troubleshooting
+
+```bash
+docker compose ps
+docker compose logs --tail=200 wg-easy
+docker compose logs --tail=200 vpn-bot
+docker compose logs --tail=200 xray
+sudo ss -lntup
+```
+
+For connection failures, verify the UDP firewall rule, endpoint, server clock, client feature support, and non-overlapping `H1-H4` values.
+
+---
+
+## 简体中文
+
+这是一个用于 VPS 的个人 VPN Docker 套件：
+
+- **AmneziaWG Easy**：AmneziaWG 服务端和 Web 管理面板。
+- **Xray Reality**：备用 VLESS Reality 服务。
+- **Telegram 机器人**：创建、搜索、重命名、删除客户端并发送配置。
+- **分流**：公网 IPv4 流量经过 VPN，局域网流量保持本地访问。
+
+### 系统要求
+
+- Ubuntu 22.04/24.04 或 Debian 12。
+- 公网 IPv4、SSH 访问权限和可使用 `sudo` 的用户。
+- 建议至少 1 vCPU、1 GB 内存和 10 GB 磁盘。
+- 开放 `51820/udp`（AmneziaWG）和 `8443/tcp`（Xray）。
+
+Web 面板使用 `51821/tcp`。建议只绑定到 `127.0.0.1`，并通过 SSH 隧道访问。
+
+### 安装
+
+```bash
+git clone https://github.com/sstpnk/vpn-stack.git
+cd vpn-stack
+chmod +x setup.sh
+sudo ./setup.sh
+```
+
+安装脚本会按需安装 Docker、创建 `.env`、生成 Xray Reality 配置并启动容器。
+
+```bash
+docker compose ps
+docker compose logs --tail=100 wg-easy
+docker compose logs --tail=100 vpn-bot
+docker compose logs --tail=100 xray
+```
+
+访问仅绑定本机的管理面板：
+
+```bash
+ssh -L 51821:127.0.0.1:51821 user@SERVER_IP
+```
+
+然后打开 `http://127.0.0.1:51821`。
+
+### 主要 `.env` 变量
+
+| 变量 | 用途 |
+|---|---|
+| `WG_HOST` | 服务器公网 IP 或域名 |
+| `WG_PORT` | AmneziaWG UDP 端口，通常为 `51820` |
+| `PASSWORD` | Web 面板密码 |
+| `WG_DEFAULT_DNS` | 客户端配置中的 DNS |
+| `WG_ALLOWED_IPS` | 客户端路由 |
+| `WG_MTU` | 客户端 MTU |
+| `AMNEZIA_JC`, `AMNEZIA_JMIN`, `AMNEZIA_JMAX` | junk 数据包参数 |
+| `AMNEZIA_S1`, `AMNEZIA_S2` | 握手填充参数 |
+| `AMNEZIA_H1`...`AMNEZIA_H4` | 全局包头值 |
+| `AMNEZIA_I1`...`AMNEZIA_I5` | 全局 CPS 数据包 |
+| `BOT_TOKEN` | Telegram 机器人令牌 |
+| `BOT_ALLOWED_USER` | 允许使用机器人的 Telegram 用户名 |
+
+修改服务端参数后，需要重新构建并重新生成客户端配置：
+
+```bash
+docker compose up -d --build
+```
+
+不要在没有备份的情况下手工编辑 `data/wireguard/wg0.json`，其中包含私钥和 peer 数据。
+
+### 在 Web 面板中创建 peer
+
+在 **New Client** 窗口输入名称，并选择：
+
+- **Server defaults**：使用服务端全局参数。
+- 11 个内置流量预设之一。
+- 选择预设后手工修改字段。
+- 完全自定义 `H1-H4`、`I1-I5` 和 `Init_Packet_Delay`。
+
+每个 peer 的参数会保存在 `wg0.json` 中，并用于下载的配置文件和二维码。空字段继承服务端全局值。
+
+内置预设包括：YouTube Consumer、Zoom Meeting、Discord Voice、Cloudflare WARP / 1.1.1.1、Steam Download、Gosuslugi / ESIA、Mail.ru / VK Mail、Yandex Weather / News、VTB / Sberbank Online、Wildberries / Ozon、GitHub / Habr。
+
+`I1-I5` 使用类似 `<b 0x160303><r 64>` 的表达式。`Init_Packet_Delay` 必须是非负整数。客户端必须支持该指令，否则请删除它或使用服务端默认参数。
+
+这些预设只调整数据包特征，不能保证任何特定网络中的服务可用性或绕过限制。
+
+### Telegram 机器人
+
+部署后向机器人发送 `/start`。访问权限由 `BOT_ALLOWED_USER` 限制。每台设备应使用独立 peer；配置泄露后应立即删除对应 peer。
+
+### 更新和备份
+
+```bash
+tar -czf vpn-stack-backup.tar.gz .env data xray-config
+git pull
+docker compose up -d --build
+docker image prune -f
+```
+
+### 故障排查
+
+```bash
+docker compose ps
+docker compose logs --tail=200 wg-easy
+docker compose logs --tail=200 vpn-bot
+docker compose logs --tail=200 xray
+sudo ss -lntup
+```
+
+如果 peer 无法连接，请检查 UDP 防火墙、endpoint、服务器时间、客户端功能支持，以及 `H1-H4` 是否互相重叠。
+
+## Project layout
 
 ```text
-vpn-stack/
-├── .env.example
+.
+├── awg-easy/       # AmneziaWG server and web UI
+├── bot/            # Telegram bot
+├── data/           # persistent runtime data
+├── xray-config/    # Xray Reality templates
 ├── docker-compose.yml
-├── setup.sh
-├── awg-easy/             # локальный fork генератора AmneziaWG-конфигов
-│   ├── Dockerfile
-│   ├── LICENSE
-│   └── src/
-├── bot/
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── src/
-│       ├── bot.py
-│       └── wgapi.py
-├── data/
-│   └── wg-easy/
-└── xray-config/
-    ├── config.template.json
-    └── config.json
+└── setup.sh
 ```
 
-## Полезные ссылки
+## License
 
-- [VeilBox](https://www.veilbox.site/)
-- [WG Tunnel: документация по импорту](https://wgtunnel.com/docs/tunnels/)
-- [WG Tunnel: загрузка](https://wgtunnel.com/download/)
-- [AmneziaWG для iOS и macOS](https://apps.apple.com/us/app/amneziawg/id6478942365)
-- [AmneziaWG для Windows](https://github.com/amnezia-vpn/amneziawg-windows-client/releases)
-- [AmneziaWG Easy](https://github.com/spcfox/amnezia-wg-easy)
-- [Xray-core](https://github.com/XTLS/Xray-core)
-- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
-
-## Лицензия
-
-MIT License.
-
-Проект является сборкой сторонних открытых компонентов. Использование
-подразумевает соблюдение лицензий каждого компонента.
+See [awg-easy/LICENSE](awg-easy/LICENSE) and the licenses of the included upstream components.

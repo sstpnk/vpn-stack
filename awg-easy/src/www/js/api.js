@@ -100,11 +100,18 @@ class API {
     })));
   }
 
-  async createClient({ name }) {
+  async getMaskingPresets() {
+    return this.call({
+      method: 'get',
+      path: '/wireguard/masking-presets',
+    });
+  }
+
+  async createClient({ name, maskingPreset, masking }) {
     return this.call({
       method: 'post',
       path: '/wireguard/client',
-      body: { name },
+      body: { name, maskingPreset, masking },
     });
   }
 

@@ -144,6 +144,9 @@ module.exports = class Server {
       .get('/api/wireguard/client', defineEventHandler(() => {
         return WireGuard.getClients();
       }))
+      .get('/api/wireguard/masking-presets', defineEventHandler(() => {
+        return WireGuard.getMaskingPresets();
+      }))
       .get('/api/wireguard/client/:clientId/qrcode.svg', defineEventHandler(async (event) => {
         const clientId = getRouterParam(event, 'clientId');
         const svg = await WireGuard.getClientQRCodeSVG({ clientId });
@@ -165,8 +168,8 @@ module.exports = class Server {
         return config;
       }))
       .post('/api/wireguard/client', defineEventHandler(async (event) => {
-        const { name } = await readBody(event);
-        return WireGuard.createClient({ name });
+        const { name, maskingPreset, masking } = await readBody(event);
+        return WireGuard.createClient({ name, maskingPreset, masking });
       }))
       .delete('/api/wireguard/client/:clientId', defineEventHandler(async (event) => {
         const clientId = getRouterParam(event, 'clientId');
