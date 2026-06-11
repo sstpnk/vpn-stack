@@ -1933,6 +1933,20 @@ video {
   border-color: #d1d5db;
 }
 
+.client-create-field {
+  display: block;
+  min-width: 0;
+}
+
+.client-create-field-label {
+  display: block;
+  margin: 0 0 5px 2px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
 .client-create-header-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1951,6 +1965,10 @@ video {
 
 .dark .client-create-label {
   color: #e5e5e5;
+}
+
+.dark .client-create-field-label {
+  color: #d4d4d4;
 }
 
 .dark .client-create-control {
