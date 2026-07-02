@@ -12,6 +12,7 @@ from telegram import (
     ReplyKeyboardMarkup,
     Update,
 )
+from telegram.error import NetworkError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -743,6 +744,14 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    error = context.error
+    if isinstance(error, NetworkError):
+        logger.warning("Telegram network error while processing update=%r: %s", update, error)
+        return
+    logger.exception("Unhandled bot error while processing update=%r", update, exc_info=error)
+
+
 def main():
     token = os.environ["BOT_TOKEN"]
     app = Application.builder().token(token).build()
@@ -809,6 +818,7 @@ def main():
     app.add_handler(MessageHandler(filters.Text(["🗑 Delete VLESS"]), vless_delete_menu))
     app.add_handler(CommandHandler("vless_delete", vless_delete_menu))
     app.add_handler(CallbackQueryHandler(on_callback))
+    app.add_error_handler(error_handler)
 
     logger.info("Bot started, allowed users: %s", ALLOWED_USERNAMES)
     app.run_polling()
