@@ -29,7 +29,9 @@ echo -e "${GREEN}✓ Docker is ready${NC}"
 if [ ! -f .env ]; then
     echo -e "${YELLOW}Creating .env file...${NC}"
     
-    read -p "Server IP address: " WG_HOST
+    read -p "Public server host (domain or IP): " PUBLIC_HOST
+    WG_HOST=$PUBLIC_HOST
+    XRAY_PUBLIC_HOST=$PUBLIC_HOST
     read -sp "Web UI password: " WG_EASY_PASSWORD
     echo
     read -p "WireGuard port [51820]: " WG_PORT
@@ -41,10 +43,12 @@ if [ ! -f .env ]; then
     
     cat > .env << ENV_EOF
 # Server configuration
+PUBLIC_HOST=$PUBLIC_HOST
 WG_HOST=$WG_HOST
 WG_EASY_PASSWORD=$WG_EASY_PASSWORD
 WG_PORT=$WG_PORT
 XRAY_PORT=$XRAY_PORT
+XRAY_PUBLIC_HOST=$XRAY_PUBLIC_HOST
 
 # Telegram bot (optional)
 BOT_TOKEN=$BOT_TOKEN
@@ -78,6 +82,6 @@ echo -e "${YELLOW}Starting VPN stack...${NC}"
 DOCKER_COMPOSE_EXPERIMENTAL=false docker compose up -d --build
 
 echo -e "${GREEN}=== Setup complete ===${NC}"
-echo "Web UI: http://$WG_HOST:51821"
+echo "Web UI: http://${PUBLIC_HOST:-$WG_HOST}:51821"
 echo "Check status: docker compose ps"
 echo "View logs: docker compose logs -f"

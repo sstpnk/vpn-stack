@@ -136,6 +136,20 @@ class XrayManagerTest(unittest.TestCase):
         user = client["client_config"]["outbounds"][0]["settings"]["vnext"][0]["users"][0]
         self.assertNotIn("flow", user)
 
+    def test_public_host_falls_back_to_shared_public_host(self):
+        os.environ["XRAY_PUBLIC_HOST"] = ""
+        os.environ["PUBLIC_HOST"] = "vpn.example.com"
+        manager = XrayManager(FakeDocker(self.container))
+
+        clients = manager.list_clients()
+        outbound = clients[0]["client_config"]["outbounds"][0]
+
+        self.assertIn("@vpn.example.com:8443", clients[0]["link"])
+        self.assertEqual(
+            outbound["settings"]["vnext"][0]["address"],
+            "vpn.example.com",
+        )
+
     def test_creates_and_deletes_client(self):
         created = self.manager.create_client("laptop")
         config = json.loads(self.config_path.read_text(encoding="utf-8"))
