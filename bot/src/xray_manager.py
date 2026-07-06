@@ -15,7 +15,11 @@ class XrayManager:
     def __init__(self, docker_client=None):
         self.config_path = Path(os.environ.get("XRAY_CONFIG_PATH", "/xray-config/config.json"))
         self.container_name = os.environ.get("XRAY_CONTAINER", "vpn-xray")
-        self.public_host = os.environ.get("XRAY_PUBLIC_HOST") or os.environ.get("WG_HOST", "")
+        self.public_host = (
+            os.environ.get("XRAY_PUBLIC_HOST")
+            or os.environ.get("PUBLIC_HOST")
+            or os.environ.get("WG_HOST", "")
+        )
         self.public_port = int(os.environ.get("XRAY_PORT", "8443"))
         self.server_name = os.environ.get("XRAY_SERVER_NAME", "www.google.com")
         self.fingerprint = os.environ.get("XRAY_FINGERPRINT", "randomized")
@@ -223,7 +227,7 @@ class XrayManager:
         flow: str | None,
     ) -> str:
         if not self.public_host:
-            raise ValueError("XRAY_PUBLIC_HOST or WG_HOST is not configured")
+            raise ValueError("XRAY_PUBLIC_HOST, PUBLIC_HOST, or WG_HOST is not configured")
 
         query_parameters = {
             "encryption": "none",
