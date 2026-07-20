@@ -45,6 +45,10 @@ services:
     image: teddysun/xray:latest
     container_name: vpn-xray
     restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     ports:
       - "${XRAY_PORT:-8443}:8443/tcp"
     volumes:
