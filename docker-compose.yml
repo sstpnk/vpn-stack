@@ -40,6 +40,9 @@ services:
       - net.ipv4.ip_forward=1
     devices:
       - /dev/net/tun:/dev/net/tun
+    networks:
+      - default
+      - prod-router
     logging: &id001
       driver: json-file
       options:
@@ -59,6 +62,13 @@ services:
     volumes:
       - ./xray-config:/etc/xray:ro
     logging: *id001
+
+networks:
+  default:
+    driver: bridge
+  prod-router:
+    external: true
+    name: prod-router_default
 
   vpn-bot:
     build: ./bot
