@@ -542,28 +542,26 @@ I5 = <r 0>
 
 ## Подключение Windows
 
-### VeilBox
+### NyameBox (NekoBox for PC)
 
-[VeilBox](https://www.veilbox.site/) поддерживает Windows 10/11, VLESS Reality
-и AmneziaWG.
+[NyameBox](https://github.com/qr243vbi/nekobox/releases) — форк NekoRay/NekoBox
+на sing-box, поддерживающий VLESS Reality и AmneziaWG в одном приложении.
+Поддерживает Windows 10/11.
 
-1. Скачайте установщик с официального сайта или со страницы
-   [GitHub Releases](https://github.com/artem4150/VeilBox/releases).
-2. Установите и запустите VeilBox.
-3. Выберите импорт конфигурации/профиля.
-4. Укажите полученный `.conf` либо вставьте его содержимое.
-5. Выберите созданный профиль и включите подключение.
-6. Разрешите создание VPN/TUN-интерфейса, если Windows запросит права
+1. Скачайте последний релиз `.zip` или `.7z` со страницы
+   [GitHub Releases](https://github.com/qr243vbi/nekobox/releases).
+2. Распакуйте и запустите `nekobox.exe`.
+3. Импортируйте `.conf` через **Сервер → Добавить профиль вручную →
+   WireGuard** либо перетащите файл в окно программы.
+4. Выберите профиль и включите TUN-режим.
+5. Per-app маршрутизация: в **VPN Settings → Applications** укажите процессы,
+   которые должны идти через туннель (или наоборот — исключения).
+6. Разрешите создание VPN-интерфейса, если Windows запросит права
    администратора.
 
 Маршруты для локальных сетей уже исключены из `AllowedIPs` в конфиге,
 полученном от бота. Не включайте дополнительный full-tunnel override, если
 нужен доступ к принтерам, NAS и другим устройствам LAN.
-
-Альтернативный клиент:
-[официальный AmneziaWG для Windows](https://github.com/amnezia-vpn/amneziawg-windows-client/releases).
-В нём выберите **Import tunnel(s) from file**, укажите `.conf` и активируйте
-туннель.
 
 ## Подключение macOS
 
@@ -606,27 +604,23 @@ VeilBox предназначена для Apple Silicon.
 Можно импортировать конфигурацию по QR-коду из веб-интерфейса, но показывайте
 QR только в доверенной среде: он содержит тот же приватный ключ, что и `.conf`.
 
-## Подключение Android через WG Tunnel
+## Подключение Android через NekoBox
 
-[WG Tunnel](https://wgtunnel.com/) — открытый клиент WireGuard/AmneziaWG для
-Android с импортом `.conf`, QR-кодов и настройками автоподключения.
+[NekoBox](https://github.com/qr243vbi/NekoBox) — форк NekoBox для Android
+на sing-box, поддерживающий VLESS Reality и AmneziaWG в одном приложении.
 
-1. Установите приложение с
-   [официальной страницы загрузки](https://wgtunnel.com/download/) или из
-   Google Play.
-2. На главном экране нажмите `+`.
-3. Выберите импорт из `.conf` и укажите файл, полученный от бота. Также можно
-   использовать QR-код или вставку из буфера обмена.
-4. Оставьте режим **VPN/Userspace**: root для обычной работы не нужен.
-5. Включите туннель и подтвердите системный запрос Android на создание VPN.
+1. Скачайте APK со страницы
+   [Releases](https://github.com/qr243vbi/NekoBox/releases)
+   или найдите NekoBox в Google Play / F-Droid.
+2. Установите, откройте и нажмите `+` → **Import config from file**.
+3. Укажите полученный `.conf`. Приложение автоматически распознает AmneziaWG.
+4. Включите туннель и подтвердите системный запрос Android на создание VPN.
+5. Для per-app маршрутизации: войдите в профиль → **Route** → **Route by app**,
+   выберите приложения, которые должны идти через туннель. Остальные будут
+   ходить напрямую.
 
-WG Tunnel автоматически использует AmneziaWG backend, если в конфигурации есть
-параметры Amnezia. Не включайте **Kernel mode** для AmneziaWG: этот режим
-предназначен для kernel WireGuard и требует root.
-
-Для автоподключения можно назначить туннель основным, включить **Start on
-Boot**, **Always-on VPN** или правила Auto-Tunneling. Настройки split tunneling
-по приложениям в WG Tunnel дополняют IP-маршруты из `AllowedIPs`.
+В NekoBox также можно импортировать JSON-конфигурацию, которую бот отправляет
+вместе с `.conf`. Это гарантирует корректную структуру для sing-box.
 
 ## Проверка подключения
 
@@ -1053,17 +1047,18 @@ recommended Mux settings.
 
 ### Client applications
 
-- **Windows**: [VeilBox](https://www.veilbox.site/) or
-  [AmneziaWG for Windows](https://github.com/amnezia-vpn/amneziawg-windows-client/releases).
+- **Windows**: [NyameBox (NekoBox for PC)](https://github.com/qr243vbi/nekobox/releases)
+  — a sing-box fork supporting both VLESS Reality and AmneziaWG.
 - **macOS**: VeilBox on Apple Silicon or
   [AmneziaWG from the App Store](https://apps.apple.com/us/app/amneziawg/id6478942365).
 - **iPhone/iPad**: import the file or scan the QR code in AmneziaWG.
-- **Android**: [WG Tunnel](https://wgtunnel.com/download/), using
-  VPN/Userspace mode for AmneziaWG configurations.
+- **Android**: [NekoBox](https://github.com/qr243vbi/NekoBox)
+  — a sing-box fork supporting both VLESS Reality and AmneziaWG in one app.
 
+NyameBox and NekoBox also accept the JSON config the bot sends alongside the
+`.conf` file, ensuring correct sing-box endpoint structure for AmneziaWG.
 Do not enable a full-tunnel override if local printers, NAS devices, or routers
-must remain reachable. WG Tunnel automatically selects its AmneziaWG backend
-when Amnezia-specific directives are present.
+must remain reachable.
 
 ### Xray Reality
 
@@ -1355,16 +1350,16 @@ docker compose logs -f vpn-bot
 
 ### 客户端
 
-- **Windows**：[VeilBox](https://www.veilbox.site/) 或
-  [AmneziaWG Windows](https://github.com/amnezia-vpn/amneziawg-windows-client/releases)。
+- **Windows**：[NyameBox (NekoBox for PC)](https://github.com/qr243vbi/nekobox/releases)
+  — 基于 sing-box 的 fork，支持 VLESS Reality 和 AmneziaWG。
 - **macOS**：Apple Silicon 可使用 VeilBox，也可使用
   [App Store 版 AmneziaWG](https://apps.apple.com/us/app/amneziawg/id6478942365)。
 - **iPhone/iPad**：在 AmneziaWG 中导入文件或扫描二维码。
-- **Android**：[WG Tunnel](https://wgtunnel.com/download/)，AmneziaWG
-  配置应使用 VPN/Userspace 模式。
+- **Android**：[NekoBox](https://github.com/qr243vbi/NekoBox)
+  — 基于 sing-box 的 fork，支持 VLESS Reality 和 AmneziaWG。
 
-如果需要访问打印机、NAS 和路由器，不要启用额外的 full-tunnel
-覆盖。WG Tunnel 检测到 Amnezia 指令时会自动使用对应后端。
+NyameBox 和 NekoBox 也接受机器人随 `.conf` 一起发送的 JSON 配置，
+确保 AmneziaWG 端点的 sing-box 结构正确。
 
 ### Xray Reality
 

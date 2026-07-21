@@ -35,7 +35,13 @@ COPY --from=build_node_modules /node_modules /node_modules
 RUN apk add --no-cache \
     dpkg \
     dumb-init \
-    iptables
+    iptables \
+    openssl
+
+# Generate self-signed TLS certificate for HTTPS
+RUN openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout /app/tls.key -out /app/tls.crt \
+    -subj "/CN=vpn-stack" 2>/dev/null
 
 # Use iptables-legacy
 RUN update-alternatives --install /sbin/iptables iptables /sbin/iptables-legacy 10 --slave /sbin/iptables-restore iptables-restore /sbin/iptables-legacy-restore --slave /sbin/iptables-save iptables-save /sbin/iptables-legacy-save
