@@ -2,6 +2,7 @@ import html
 import json
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from functools import wraps
 from io import BytesIO
@@ -100,17 +101,70 @@ INLINE_MENU = InlineKeyboardMarkup([
 ])
 
 AMNEZIA_LINKS = (
-    "\n\n📱 <b>Install a WireGuard client — two options:</b>\n\n"
-    "<b>AmneziaWG</b>\n"
+    "\n\n📱 <b>Install a client — two recommended options:</b>\n\n"
+    "<b>NyameBox (NekoBox for PC)</b> — Windows, sing-box, VLESS + AmneziaWG\n"
+    '  <a href="https://github.com/qr243vbi/nekobox/releases">GitHub Releases</a>\n\n'
+    "<b>NekoBox</b> — Android, sing-box, VLESS + AmneziaWG\n"
+    '  <a href="https://github.com/qr243vbi/NekoBox">GitHub</a> · '
+    '<a href="https://play.google.com/store/apps/details?id=org.amnezia.awg">Google Play (AmneziaWG)</a>\n\n'
+    "<b>AmneziaWG</b> — iOS, macOS, Windows (альтернатива)\n"
     '  <a href="https://apps.apple.com/us/app/amneziawg/id6478942365">iOS &amp; macOS</a> · '
-    '<a href="https://play.google.com/store/apps/details?id=org.amnezia.awg">Android</a> · '
-    '<a href="https://github.com/amnezia-vpn/amneziawg-windows-client/releases">Windows</a> · '
-    '<a href="https://github.com/amnezia-vpn/amneziawg-linux-kernel-module">Linux</a>\n\n'
-    "<b>WG Tunnel</b> (split tunneling)\n"
-    '  <a href="https://play.google.com/store/apps/details?id=com.zaneschepke.wireguardautotunnel">Android</a> · '
-    '<a href="https://wgtunnel.com/download?platform=windows">Windows</a> · '
-    '<a href="https://wgtunnel.com/download?platform=linux">Linux</a>'
+    '<a href="https://github.com/amnezia-vpn/amneziawg-windows-client/releases">Windows</a>'
 )
+
+
+def generate_nekobox_json(conf_text: str) -> bytes:
+    """Parse AmneziaWG .conf and generate NekoBox/sing-box endpoint JSON."""
+    ep = {"type": "proxy", "useIntegratedTun": False}
+
+    interface = re.search(r"\[Interface\](.*?)(?=\[Peer\]|$)", conf_text, re.DOTALL)
+    peer_sec = re.search(r"\[Peer\](.*?)$", conf_text, re.DOTALL)
+
+    if interface:
+        for line in interface.group(1).split("\n"):
+            line = line.strip()
+            if "=" not in line:
+                continue
+            k, v = (x.strip() for x in line.split("=", 1))
+            if k.startswith("#"):
+                continue
+            kl = k.lower()
+            if k == "PrivateKey":
+                ep["private_key"] = v
+            elif k == "Address":
+                ep["address"] = [v]
+            elif k == "DNS":
+                ep["dns"] = v
+            elif k == "MTU":
+                ep["mtu"] = int(v)
+            elif k in ("Jc", "Jmin", "Jmax", "S1", "S2"):
+                ep[kl] = int(v)
+            elif k in ("H1", "H2", "H3", "H4", "I1", "I2", "I3", "I4", "I5"):
+                ep[kl] = v
+
+    if peer_sec:
+        peer = {}
+        for line in peer_sec.group(1).split("\n"):
+            line = line.strip()
+            if "=" not in line:
+                continue
+            k, v = (x.strip() for x in line.split("=", 1))
+            if k.startswith("#"):
+                continue
+            if k == "PublicKey":
+                peer["public_key"] = v
+            elif k == "PresharedKey":
+                peer["pre_shared_key"] = v
+            elif k == "AllowedIPs":
+                peer["allowed_ips"] = v
+            elif k == "Endpoint":
+                peer["endpoint"] = v
+            elif k == "PersistentKeepalive":
+                peer["persistent_keepalive"] = int(v)
+        if peer:
+            ep["peers"] = [peer]
+
+    return json.dumps({"endpoints": [ep]}, indent=2, ensure_ascii=False).encode("utf-8")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -381,6 +435,13 @@ async def create_receive_name(update: Update, context: ContextTypes.DEFAULT_TYPE
             filename=filename,
             caption=f"✅ Peer <b>{html.escape(name)}</b> created!",
             parse_mode="HTML",
+        )
+        nekobox_json = generate_nekobox_json(config_data.decode("utf-8"))
+        await update.message.reply_document(
+            document=BytesIO(nekobox_json),
+            filename=f"nekobox-{filename}",
+            caption="NekoBox/NyameBox JSON config — импортируйте в приложение вместо .conf, "
+                    "если .conf даёт неверную структуру.",
         )
     except Exception as e:
         await update.message.reply_text(f"API error: {e}")
@@ -655,6 +716,12 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 filename=filename,
                 caption=AMNEZIA_LINKS,
                 parse_mode="HTML",
+            )
+            nekobox_json = generate_nekobox_json(config_data.decode("utf-8"))
+            await query.message.reply_document(
+                document=BytesIO(nekobox_json),
+                filename=f"nekobox-{filename}",
+                caption="NekoBox/NyameBox JSON config — импортируйте как JSON.",
             )
         except Exception as e:
             await query.edit_message_text(f"API error: {e}")

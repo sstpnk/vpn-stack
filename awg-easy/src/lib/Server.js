@@ -1,7 +1,9 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const { existsSync, readFileSync } = require('node:fs');
 const { createServer } = require('node:http');
+const { createServer: createSecureServer } = require('node:https');
 const { stat, readFile } = require('node:fs/promises');
 const { resolve, sep } = require('node:path');
 
@@ -295,7 +297,22 @@ module.exports = class Server {
       }),
     );
 
-    createServer(toNodeListener(app)).listen(PORT, WEBUI_HOST);
+    let server;
+    try {
+      const tlsKey = '/app/tls.key';
+      const tlsCert = '/app/tls.crt';
+      if (existsSync(tlsKey) && existsSync(tlsCert)) {
+        server = createSecureServer({
+          key: readFileSync(tlsKey),
+          cert: readFileSync(tlsCert),
+        }, toNodeListener(app));
+      } else {
+        server = createServer(toNodeListener(app));
+      }
+    } catch {
+      server = createServer(toNodeListener(app));
+    }
+    server.listen(PORT, WEBUI_HOST);
     debug(`Listening on http://${WEBUI_HOST}:${PORT}`);
   }
 
