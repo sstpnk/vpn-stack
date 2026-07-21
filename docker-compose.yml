@@ -63,13 +63,6 @@ services:
       - ./xray-config:/etc/xray:ro
     logging: *id001
 
-networks:
-  default:
-    driver: bridge
-  prod-router:
-    external: true
-    name: prod-router_default
-
   vpn-bot:
     build: ./bot
     container_name: vpn-bot
@@ -97,3 +90,10 @@ networks:
       - wg-easy
       - xray
     logging: *id001
+
+networks:
+  default:
+    driver: bridge
+  prod-router:
+    external: true
+    name: prod-router_default
