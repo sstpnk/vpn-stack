@@ -40,6 +40,11 @@ services:
       - net.ipv4.ip_forward=1
     devices:
       - /dev/net/tun:/dev/net/tun
+    logging: &id001
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   xray:
     image: teddysun/xray:latest
@@ -53,6 +58,7 @@ services:
       - "${XRAY_PORT:-8443}:8443/tcp"
     volumes:
       - ./xray-config:/etc/xray:ro
+    logging: *id001
 
   vpn-bot:
     build: ./bot
@@ -80,3 +86,4 @@ services:
     depends_on:
       - wg-easy
       - xray
+    logging: *id001
