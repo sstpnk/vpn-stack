@@ -162,7 +162,7 @@ WG_ALLOWED_IPS=
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=randomized
+XRAY_FINGERPRINT=random
 
 # Параметры AmneziaWG
 AMNEZIA_JC=10
@@ -208,7 +208,7 @@ docker compose up -d --build --force-recreate
 | `XRAY_PORT` | `8443` | внешний TCP-порт Xray Reality |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, затем `WG_HOST` | адрес, используемый в VLESS-ссылках |
 | `XRAY_SERVER_NAME` | `www.google.com` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
-| `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint в клиентских VLESS-профилях |
+| `XRAY_FINGERPRINT` | `random` | uTLS fingerprint в клиентских VLESS-профилях |
 | `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
 | `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
 | `AMNEZIA_JMAX` | `200` | максимальный размер мусорного пакета в байтах |
@@ -721,7 +721,7 @@ VLESS Reality и flow `xtls-rprx-vision`.
 Пример генерируемой ссылки:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=random&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 Для каждого подключения бот:
@@ -907,7 +907,7 @@ WG_ALLOWED_IPS=
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=randomized
+XRAY_FINGERPRINT=random
 
 AMNEZIA_JC=10
 AMNEZIA_JMIN=64
@@ -941,7 +941,7 @@ DOCKER_COMPOSE_EXPERIMENTAL=false
 | `XRAY_PORT` | `8443` | external Xray Reality TCP port |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, then `WG_HOST` | host used in generated VLESS links |
 | `XRAY_SERVER_NAME` | `www.google.com` | default Reality SNI |
-| `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint |
+| `XRAY_FINGERPRINT` | `random` | uTLS fingerprint |
 | `AMNEZIA_JC/JMIN/JMAX` | see example | junk packet count and size |
 | `AMNEZIA_S1/S2` | `64` | Init and Response padding |
 | `AMNEZIA_H1-H4` | see example | global packet header values/ranges |
@@ -1074,7 +1074,7 @@ clients.
 Generated links resemble:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=random&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 For each client the bot creates a UUID and short ID, derives the public key
@@ -1224,7 +1224,7 @@ WG_ALLOWED_IPS=
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=randomized
+XRAY_FINGERPRINT=random
 
 AMNEZIA_JC=10
 AMNEZIA_JMIN=64
@@ -1257,7 +1257,7 @@ ALLOWED_USERNAMES=your_telegram_username
 | `XRAY_PORT` | `8443` | Xray Reality TCP 端口 |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`，然后 `WG_HOST` | VLESS 链接使用的主机 |
 | `XRAY_SERVER_NAME` | `www.google.com` | 默认 Reality SNI |
-| `XRAY_FINGERPRINT` | `randomized` | uTLS fingerprint |
+| `XRAY_FINGERPRINT` | `random` | uTLS fingerprint |
 | `AMNEZIA_JC/JMIN/JMAX` | 见示例 | junk 数据包数量和大小 |
 | `AMNEZIA_S1/S2` | `64` | Init/Response 填充 |
 | `AMNEZIA_H1-H4` | 见示例 | 全局包头值或范围 |
@@ -1372,7 +1372,7 @@ Xray Reality 是备用传输。客户端必须支持 VLESS Reality 和
 需要同步更新已有客户端。
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=randomized&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=random&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 机器人会为每个客户端创建 UUID 和 short ID，从现有私钥推导公钥，
