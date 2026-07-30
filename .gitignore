@@ -1,6 +1,10 @@
 # Environment files with secrets
 .env
+.env.*
+!.env.example
 bot/.env
+bot/.env.*
+!bot/.env.example
 
 # Data directories with generated configs
 data/
@@ -10,3 +14,19 @@ xray-config/config.*.pending.json
 # Python cache
 __pycache__/
 *.pyc
+
+# Agent runtime state
+.omo/
+
+# Node.js
+node_modules/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

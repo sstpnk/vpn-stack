@@ -22,7 +22,7 @@ class XrayManager:
         )
         self.public_port = int(os.environ.get("XRAY_PORT", "8443"))
         self.server_name = os.environ.get("XRAY_SERVER_NAME", "www.google.com")
-        self.fingerprint = os.environ.get("XRAY_FINGERPRINT", "randomized")
+        self.fingerprint = os.environ.get("XRAY_FINGERPRINT", "random")
         self.restart_stability_seconds = float(
             os.environ.get("XRAY_RESTART_STABILITY_SECONDS", "2")
         )

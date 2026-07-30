@@ -82,7 +82,7 @@ services:
       - XRAY_CONFIG_PATH=/xray-config/config.json
       - XRAY_CONTAINER=vpn-xray
       - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-www.google.com}
-      - XRAY_FINGERPRINT=${XRAY_FINGERPRINT:-randomized}
+      - XRAY_FINGERPRINT=${XRAY_FINGERPRINT:-random}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./xray-config:/xray-config

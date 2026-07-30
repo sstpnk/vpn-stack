@@ -1,6 +1,6 @@
 {
   "log": {
-    "loglevel": "warning"
+    "loglevel": "info"
   },
   "inbounds": [
     {
@@ -22,15 +22,16 @@
         "security": "reality",
         "realitySettings": {
           "show": false,
-          "target": "www.google.com:443",
           "xver": 0,
+          "fingerprint": "random",
           "serverNames": [
             "www.google.com"
           ],
           "privateKey": "YOUR_PRIVATE_KEY",
           "shortIds": [
             "YOUR_SHORT_ID"
-          ]
+          ],
+          "target": "www.google.com:443"
         }
       },
       "sniffing": {

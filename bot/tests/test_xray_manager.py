@@ -98,7 +98,7 @@ class XrayManagerTest(unittest.TestCase):
             "XRAY_PUBLIC_HOST": "203.0.113.10",
             "XRAY_PORT": "8443",
             "XRAY_SERVER_NAME": "www.google.com",
-            "XRAY_FINGERPRINT": "randomized",
+            "XRAY_FINGERPRINT": "random",
             "XRAY_RESTART_STABILITY_SECONDS": "0",
         })
         self.manager = XrayManager(FakeDocker(self.container))
@@ -123,6 +123,19 @@ class XrayManagerTest(unittest.TestCase):
         self.assertEqual(
             outbound["streamSettings"]["realitySettings"]["spiderX"],
             "/",
+        )
+
+    def test_default_fingerprint_is_random(self):
+        os.environ.pop("XRAY_FINGERPRINT")
+        manager = XrayManager(FakeDocker(self.container))
+
+        client = manager.list_clients()[0]
+
+        self.assertIn("fp=random", client["link"])
+        outbound = client["client_config"]["outbounds"][0]
+        self.assertEqual(
+            outbound["streamSettings"]["realitySettings"]["fingerprint"],
+            "random",
         )
 
     def test_legacy_client_link_does_not_invent_flow(self):
