@@ -58,6 +58,16 @@ def install_stubs():
 
 
 class BotMenuTest(unittest.TestCase):
+    def test_main_keyboard_uses_two_buttons_per_row(self):
+        install_stubs()
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+        sys.modules.pop("bot", None)
+
+        bot = importlib.import_module("bot")
+
+        row_lengths = [len(row) for row in bot.MAIN_KEYBOARD.keyboard]
+        self.assertEqual(row_lengths, [2, 2, 2, 2])
+
     def test_inline_menu_uses_two_buttons_per_row(self):
         install_stubs()
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
