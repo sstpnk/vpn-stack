@@ -14,7 +14,7 @@ Current release: **v1.0.0**. See [CHANGELOG.md](CHANGELOG.md) and
 ## Что входит в стек
 
 - **AmneziaWG Easy** — VPN-сервер и веб-интерфейс управления peer-ами.
-- **Xray Reality** — резервный VLESS Reality-сервер на TCP-порту 8443.
+- **Xray Reality** — резервный VLESS Reality-сервер на TCP-порту 443.
 - **Telegram-бот** — создание, поиск и удаление peer-ов, выдача готовых
   клиентских конфигураций.
 - **Split tunneling** — клиентский конфиг направляет публичный IPv4-трафик
@@ -33,10 +33,10 @@ Current release: **v1.0.0**. See [CHANGELOG.md](CHANGELOG.md) and
 |------|----------|------------|
 | `22` | TCP | SSH; замените, если SSH работает на другом порту |
 | `51820` | UDP | AmneziaWG |
-| `8443` | TCP | Xray Reality |
+| `443` | TCP | Xray Reality |
 | `51821` | TCP | веб-интерфейс; рекомендуется только локальный доступ через SSH |
 
-Публичные порты `22/tcp`, `51820/udp` и `8443/tcp` нужно разрешить и в firewall
+Публичные порты `22/tcp`, `51820/udp` и `443/tcp` нужно разрешить и в firewall
 операционной системы, и в firewall/security group панели VPS-провайдера.
 
 > Веб-интерфейс на порту `51821` работает по HTTP. Не оставляйте его открытым
@@ -67,7 +67,7 @@ apt update
 apt install -y ufw
 ufw allow OpenSSH
 ufw allow 51820/udp
-ufw allow 8443/tcp
+ufw allow 443/tcp
 ufw enable
 ufw status
 ```
@@ -131,7 +131,7 @@ docker compose logs --tail=100 xray
 Все контейнеры должны иметь состояние `Up`. Для проверки открытых портов:
 
 ```bash
-ss -lntup | grep -E ':(8443|51820|51821)\b'
+ss -lntup | grep -E ':(443|51820|51821)\b'
 ```
 
 Чтобы открыть закрытый веб-интерфейс, создайте SSH-туннель со своего
@@ -159,7 +159,7 @@ WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
 # Пустое значение использует split-маршруты из локального fork-а
 WG_ALLOWED_IPS=
-XRAY_PORT=8443
+XRAY_PORT=443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
@@ -205,7 +205,7 @@ docker compose up -d --build --force-recreate
 | `WG_MTU` | `1280` | MTU, добавляемый сервером в клиентский конфиг |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | интервал keepalive клиента в секундах |
 | `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
-| `XRAY_PORT` | `8443` | внешний TCP-порт Xray Reality |
+| `XRAY_PORT` | `443` | внешний TCP-порт Xray Reality |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, затем `WG_HOST` | адрес, используемый в VLESS-ссылках |
 | `XRAY_SERVER_NAME` | `kookas.fi` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint в клиентских VLESS-профилях |
@@ -721,7 +721,7 @@ VLESS Reality и flow `xtls-rprx-vision`.
 Пример генерируемой ссылки:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 Для каждого подключения бот:
@@ -796,7 +796,7 @@ fallback.
 ### Components
 
 - **AmneziaWG Easy**: AmneziaWG server and web-based peer administration.
-- **Xray Reality**: fallback VLESS Reality server on TCP port `8443`.
+- **Xray Reality**: fallback VLESS Reality server on TCP port `443`.
 - **Telegram bot**: creates, searches, renames, deletes, and exports
   AmneziaWG peers and manages VLESS Reality clients.
 - **Split tunneling**: public IPv4 traffic goes through the VPN while RFC1918
@@ -813,7 +813,7 @@ fallback.
 |------|----------|---------|
 | `22` | TCP | SSH; replace it if the server uses another port |
 | `51820` | UDP | AmneziaWG |
-| `8443` | TCP | Xray Reality |
+| `443` | TCP | Xray Reality |
 | `51821` | TCP | web UI; local access through SSH is recommended |
 
 Allow the public ports both in the operating-system firewall and in the VPS
@@ -838,7 +838,7 @@ apt update
 apt install -y ufw
 ufw allow OpenSSH
 ufw allow 51820/udp
-ufw allow 8443/tcp
+ufw allow 443/tcp
 ufw enable
 ufw status
 ```
@@ -880,7 +880,7 @@ docker compose ps
 docker compose logs --tail=100 wg-easy
 docker compose logs --tail=100 vpn-bot
 docker compose logs --tail=100 xray
-ss -lntup | grep -E ':(8443|51820|51821)\b'
+ss -lntup | grep -E ':(443|51820|51821)\b'
 ```
 
 Open a tunnel to the private panel:
@@ -904,7 +904,7 @@ WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
 WG_ALLOWED_IPS=
 
-XRAY_PORT=8443
+XRAY_PORT=443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
@@ -938,7 +938,7 @@ DOCKER_COMPOSE_EXPERIMENTAL=false
 | `WG_MTU` | `1280` | MTU written to client configurations |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | client keepalive interval |
 | `WG_ALLOWED_IPS` | split routes | override client routes |
-| `XRAY_PORT` | `8443` | external Xray Reality TCP port |
+| `XRAY_PORT` | `443` | external Xray Reality TCP port |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, then `WG_HOST` | host used in generated VLESS links |
 | `XRAY_SERVER_NAME` | `kookas.fi` | default Reality SNI |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
@@ -1074,7 +1074,7 @@ clients.
 Generated links resemble:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 For each client the bot creates a UUID and short ID, derives the public key
@@ -1142,7 +1142,7 @@ UDP 传输方式，Xray Reality 可作为备用连接。
 ### 组件
 
 - **AmneziaWG Easy**：AmneziaWG 服务端和 peer Web 管理面板。
-- **Xray Reality**：监听 `8443/tcp` 的备用 VLESS Reality 服务。
+- **Xray Reality**：监听 `443/tcp` 的备用 VLESS Reality 服务。
 - **Telegram 机器人**：创建、搜索、重命名、删除和导出 AmneziaWG
   peer，并管理 VLESS Reality 客户端。
 - **分流**：公网 IPv4 流量经过 VPN，RFC1918 私有网络保持本地访问。
@@ -1158,7 +1158,7 @@ UDP 传输方式，Xray Reality 可作为备用连接。
 |------|------|------|
 | `22` | TCP | SSH；如果使用其他端口请相应修改 |
 | `51820` | UDP | AmneziaWG |
-| `8443` | TCP | Xray Reality |
+| `443` | TCP | Xray Reality |
 | `51821` | TCP | Web 面板；建议仅通过 SSH 隧道访问 |
 
 必须同时在操作系统防火墙和 VPS 提供商的安全组中开放公网端口。
@@ -1175,7 +1175,7 @@ apt update
 apt install -y ufw
 ufw allow OpenSSH
 ufw allow 51820/udp
-ufw allow 8443/tcp
+ufw allow 443/tcp
 ufw enable
 ```
 
@@ -1199,7 +1199,7 @@ docker compose ps
 docker compose logs --tail=100 wg-easy
 docker compose logs --tail=100 vpn-bot
 docker compose logs --tail=100 xray
-ss -lntup | grep -E ':(8443|51820|51821)\b'
+ss -lntup | grep -E ':(443|51820|51821)\b'
 ```
 
 4. 通过 SSH 隧道访问面板：
@@ -1221,7 +1221,7 @@ WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
 WG_ALLOWED_IPS=
 
-XRAY_PORT=8443
+XRAY_PORT=443
 XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
@@ -1254,7 +1254,7 @@ ALLOWED_USERNAMES=your_telegram_username
 | `WG_MTU` | `1280` | 写入客户端配置的 MTU |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | 客户端 keepalive 间隔 |
 | `WG_ALLOWED_IPS` | 分流路由 | 覆盖客户端路由 |
-| `XRAY_PORT` | `8443` | Xray Reality TCP 端口 |
+| `XRAY_PORT` | `443` | Xray Reality TCP 端口 |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`，然后 `WG_HOST` | VLESS 链接使用的主机 |
 | `XRAY_SERVER_NAME` | `kookas.fi` | 默认 Reality SNI |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
@@ -1372,7 +1372,7 @@ Xray Reality 是备用传输。客户端必须支持 VLESS Reality 和
 需要同步更新已有客户端。
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 机器人会为每个客户端创建 UUID 和 short ID，从现有私钥推导公钥，

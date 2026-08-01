@@ -20,7 +20,7 @@ class XrayManager:
             or os.environ.get("PUBLIC_HOST")
             or os.environ.get("WG_HOST", "")
         )
-        self.public_port = int(os.environ.get("XRAY_PORT", "8443"))
+        self.public_port = int(os.environ.get("XRAY_PORT", "443"))
         self.server_name = os.environ.get("XRAY_SERVER_NAME", "kookas.fi")
         self.fingerprint = os.environ.get("XRAY_FINGERPRINT", "firefox")
         self.restart_stability_seconds = float(
