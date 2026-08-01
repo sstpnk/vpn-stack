@@ -52,14 +52,10 @@ PAGE_SIZE = 8
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        ["📋 AWG Peers"],
-        ["➕ Create Peer"],
-        ["📥 Get Peer Config"],
-        ["🗑 Delete Peer"],
-        ["🔗 VLESS Links"],
-        ["➕ Create VLESS"],
-        ["🗑 Delete VLESS"],
-        ["🔍 Search Assets"],
+        ["📋 AWG Peers", "➕ Create Peer"],
+        ["📥 Get Peer Config", "🗑 Delete Peer"],
+        ["🔗 VLESS Links", "➕ Create VLESS"],
+        ["🗑 Delete VLESS", "🔍 Search Assets"],
     ],
     resize_keyboard=True,
 )
