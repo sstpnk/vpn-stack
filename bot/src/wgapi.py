@@ -8,6 +8,7 @@ class WGEasyAPI:
         self.username = "admin"
         self.password = os.environ["WG_EASY_PASSWORD"]
         self.session = requests.Session()
+        self.session.verify = self._verify_tls()
         self._authenticated = False
 
     def login(self):
@@ -79,3 +80,12 @@ class WGEasyAPI:
         if 'filename="' in cd:
             filename = cd.split('filename="')[1].rstrip('"')
         return resp.content, filename
+
+    @staticmethod
+    def _verify_tls() -> bool:
+        return os.environ.get("WG_EASY_VERIFY_TLS", "true").lower() not in {
+            "0",
+            "false",
+            "no",
+            "off",
+        }

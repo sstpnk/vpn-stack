@@ -154,6 +154,7 @@ ssh -L 51821:127.0.0.1:51821 username@SERVER_IP
 PUBLIC_HOST=vpn.example.com
 WG_HOST=vpn.example.com
 WG_EASY_PASSWORD=replace_with_a_long_random_password
+WG_EASY_VERIFY_TLS=false
 WG_PORT=51820
 WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
@@ -201,6 +202,7 @@ docker compose up -d --build --force-recreate
 | `PUBLIC_HOST` | нет | предпочтительный публичный DNS-адрес или IPv4 VPS для клиентских конфигов |
 | `WG_HOST` | нет | host для `Endpoint` AmneziaWG; новые установки получают то же значение, что и `PUBLIC_HOST` |
 | `WG_EASY_PASSWORD` | нет | пароль веб-интерфейса |
+| `WG_EASY_VERIFY_TLS` | `false` | проверка TLS-сертификата внутреннего HTTPS API `wg-easy`; `false` нужен для self-signed сертификата контейнера |
 | `WG_PORT` | `51820` | внешний UDP-порт AmneziaWG; после изменения проверьте `Endpoint` |
 | `WG_MTU` | `1280` | MTU, добавляемый сервером в клиентский конфиг |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | интервал keepalive клиента в секундах |
@@ -899,6 +901,7 @@ Example `.env`:
 PUBLIC_HOST=vpn.example.com
 WG_HOST=vpn.example.com
 WG_EASY_PASSWORD=replace_with_a_long_random_password
+WG_EASY_VERIFY_TLS=false
 WG_PORT=51820
 WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
@@ -934,6 +937,7 @@ DOCKER_COMPOSE_EXPERIMENTAL=false
 | `PUBLIC_HOST` | none | preferred public DNS name or IPv4 address used by generated client configs |
 | `WG_HOST` | none | AmneziaWG `Endpoint` host; new installs set it to the same value as `PUBLIC_HOST` |
 | `WG_EASY_PASSWORD` | none | web UI password |
+| `WG_EASY_VERIFY_TLS` | `false` | TLS certificate verification for the internal `wg-easy` HTTPS API; keep `false` for the container self-signed certificate |
 | `WG_PORT` | `51820` | external AmneziaWG UDP port |
 | `WG_MTU` | `1280` | MTU written to client configurations |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | client keepalive interval |
@@ -1216,6 +1220,7 @@ ssh -L 51821:127.0.0.1:51821 username@SERVER_IP
 PUBLIC_HOST=vpn.example.com
 WG_HOST=vpn.example.com
 WG_EASY_PASSWORD=replace_with_a_long_random_password
+WG_EASY_VERIFY_TLS=false
 WG_PORT=51820
 WG_MTU=1280
 WG_PERSISTENT_KEEPALIVE=25
@@ -1250,6 +1255,7 @@ ALLOWED_USERNAMES=your_telegram_username
 | `PUBLIC_HOST` | 无 | 生成客户端配置时优先使用的公网 DNS 名称或 IPv4 |
 | `WG_HOST` | 无 | AmneziaWG `Endpoint` 主机；新安装会使用与 `PUBLIC_HOST` 相同的值 |
 | `WG_EASY_PASSWORD` | 无 | Web 面板密码 |
+| `WG_EASY_VERIFY_TLS` | `false` | 内部 `wg-easy` HTTPS API 的 TLS 证书校验；容器自签名证书需要保持 `false` |
 | `WG_PORT` | `51820` | AmneziaWG UDP 端口 |
 | `WG_MTU` | `1280` | 写入客户端配置的 MTU |
 | `WG_PERSISTENT_KEEPALIVE` | `25` | 客户端 keepalive 间隔 |
