@@ -96,7 +96,7 @@ class XrayManagerTest(unittest.TestCase):
             "XRAY_CONFIG_PATH": str(self.config_path),
             "XRAY_CONTAINER": "vpn-xray",
             "XRAY_PUBLIC_HOST": "203.0.113.10",
-            "XRAY_PORT": "8443",
+            "XRAY_PORT": "443",
             "XRAY_SERVER_NAME": "kookas.fi",
             "XRAY_FINGERPRINT": "firefox",
             "XRAY_RESTART_STABILITY_SECONDS": "0",
@@ -163,7 +163,7 @@ class XrayManagerTest(unittest.TestCase):
         clients = manager.list_clients()
         outbound = clients[0]["client_config"]["outbounds"][0]
 
-        self.assertIn("@vpn.example.com:8443", clients[0]["link"])
+        self.assertIn("@vpn.example.com:443", clients[0]["link"])
         self.assertEqual(
             outbound["settings"]["vnext"][0]["address"],
             "vpn.example.com",
