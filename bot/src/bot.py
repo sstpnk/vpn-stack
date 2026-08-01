@@ -76,26 +76,18 @@ PEER_SELECT_TITLE = {
 INLINE_MENU = InlineKeyboardMarkup([
     [
         InlineKeyboardButton("📋 AWG Peers", callback_data="menu:list"),
-    ],
-    [
         InlineKeyboardButton("➕ Create Peer", callback_data="menu:create"),
     ],
     [
         InlineKeyboardButton("📥 Get Peer Config", callback_data="menu:config"),
-    ],
-    [
         InlineKeyboardButton("🗑 Delete Peer", callback_data="menu:delete"),
     ],
     [
         InlineKeyboardButton("🔗 VLESS Links", callback_data="menu:vless_list"),
-    ],
-    [
         InlineKeyboardButton("➕ Create VLESS", callback_data="menu:vless_create"),
     ],
     [
         InlineKeyboardButton("🗑 Delete VLESS", callback_data="menu:vless_delete"),
-    ],
-    [
         InlineKeyboardButton("🔍 Search Assets", callback_data="menu:search"),
     ],
 ])
