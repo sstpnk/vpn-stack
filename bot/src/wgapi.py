@@ -9,6 +9,10 @@ class WGEasyAPI:
         self.password = os.environ["WG_EASY_PASSWORD"]
         self.session = requests.Session()
         self.session.verify = self._verify_tls()
+        if not self.session.verify:
+            requests.packages.urllib3.disable_warnings(
+                requests.packages.urllib3.exceptions.InsecureRequestWarning
+            )
         self._authenticated = False
 
     def login(self):
