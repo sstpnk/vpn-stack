@@ -165,15 +165,15 @@ XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
 
 # Параметры AmneziaWG
-AMNEZIA_JC=10
-AMNEZIA_JMIN=64
-AMNEZIA_JMAX=200
-AMNEZIA_S1=64
-AMNEZIA_S2=64
-AMNEZIA_H1=1000-12999
-AMNEZIA_H2=13000-24999
-AMNEZIA_H3=25000-36999
-AMNEZIA_H4=37000-50000
+AMNEZIA_JC=3
+AMNEZIA_JMIN=50
+AMNEZIA_JMAX=1000
+AMNEZIA_S1=103
+AMNEZIA_S2=21
+AMNEZIA_H1=695467002
+AMNEZIA_H2=405207407
+AMNEZIA_H3=141743987
+AMNEZIA_H4=206219833
 AMNEZIA_I1='<b 0x160301>'
 AMNEZIA_I2='<r 3><b 0x0303><r 32>'
 AMNEZIA_I3='<b 0x00><r 5>'
@@ -209,11 +209,11 @@ docker compose up -d --build --force-recreate
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, затем `WG_HOST` | адрес, используемый в VLESS-ссылках |
 | `XRAY_SERVER_NAME` | `kookas.fi` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint в клиентских VLESS-профилях |
-| `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
-| `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
-| `AMNEZIA_JMAX` | `200` | максимальный размер мусорного пакета в байтах |
-| `AMNEZIA_S1`, `AMNEZIA_S2` | `64`, `64` | padding пакетов Init и Response |
-| `AMNEZIA_H1`...`AMNEZIA_H4` | см. пример | непересекающиеся диапазоны заголовков пакетов |
+| `AMNEZIA_JC` | `3` | количество мусорных пакетов перед handshake |
+| `AMNEZIA_JMIN` | `50` | минимальный размер мусорного пакета в байтах |
+| `AMNEZIA_JMAX` | `1000` | максимальный размер мусорного пакета в байтах |
+| `AMNEZIA_S1`, `AMNEZIA_S2` | `103`, `21` | padding пакетов Init и Response |
+| `AMNEZIA_H1`...`AMNEZIA_H4` | `695467002`, `405207407`, `141743987`, `206219833` | непересекающиеся диапазоны заголовков пакетов |
 | `AMNEZIA_I1`...`AMNEZIA_I5` | см. пример | CPS-пакеты с байтами и случайными фрагментами |
 | `BOT_TOKEN` | пусто | токен, полученный у `@BotFather` |
 | `ALLOWED_USERNAMES` | пусто | Telegram username без `@`; несколько имён через запятую |
@@ -909,15 +909,15 @@ XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
 
-AMNEZIA_JC=10
-AMNEZIA_JMIN=64
-AMNEZIA_JMAX=200
-AMNEZIA_S1=64
-AMNEZIA_S2=64
-AMNEZIA_H1=1000-12999
-AMNEZIA_H2=13000-24999
-AMNEZIA_H3=25000-36999
-AMNEZIA_H4=37000-50000
+AMNEZIA_JC=3
+AMNEZIA_JMIN=50
+AMNEZIA_JMAX=1000
+AMNEZIA_S1=103
+AMNEZIA_S2=21
+AMNEZIA_H1=695467002
+AMNEZIA_H2=405207407
+AMNEZIA_H3=141743987
+AMNEZIA_H4=206219833
 AMNEZIA_I1='<b 0x160301>'
 AMNEZIA_I2='<r 3><b 0x0303><r 32>'
 AMNEZIA_I3='<b 0x00><r 5>'
@@ -943,8 +943,8 @@ DOCKER_COMPOSE_EXPERIMENTAL=false
 | `XRAY_SERVER_NAME` | `kookas.fi` | default Reality SNI |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
 | `AMNEZIA_JC/JMIN/JMAX` | see example | junk packet count and size |
-| `AMNEZIA_S1/S2` | `64` | Init and Response padding |
-| `AMNEZIA_H1-H4` | see example | global packet header values/ranges |
+| `AMNEZIA_S1/S2` | `103` / `21` | Init and Response padding |
+| `AMNEZIA_H1-H4` | `695467002`, `405207407`, `141743987`, `206219833` | global packet header values/ranges |
 | `AMNEZIA_I1-I5` | see example | global CPS packet expressions |
 | `BOT_TOKEN` | empty | token from `@BotFather` |
 | `ALLOWED_USERNAMES` | empty | allowed usernames without `@` |
@@ -1226,15 +1226,15 @@ XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
 
-AMNEZIA_JC=10
-AMNEZIA_JMIN=64
-AMNEZIA_JMAX=200
-AMNEZIA_S1=64
-AMNEZIA_S2=64
-AMNEZIA_H1=1000-12999
-AMNEZIA_H2=13000-24999
-AMNEZIA_H3=25000-36999
-AMNEZIA_H4=37000-50000
+AMNEZIA_JC=3
+AMNEZIA_JMIN=50
+AMNEZIA_JMAX=1000
+AMNEZIA_S1=103
+AMNEZIA_S2=21
+AMNEZIA_H1=695467002
+AMNEZIA_H2=405207407
+AMNEZIA_H3=141743987
+AMNEZIA_H4=206219833
 AMNEZIA_I1='<b 0x160301>'
 AMNEZIA_I2='<r 3><b 0x0303><r 32>'
 AMNEZIA_I3='<b 0x00><r 5>'
@@ -1259,8 +1259,8 @@ ALLOWED_USERNAMES=your_telegram_username
 | `XRAY_SERVER_NAME` | `kookas.fi` | 默认 Reality SNI |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
 | `AMNEZIA_JC/JMIN/JMAX` | 见示例 | junk 数据包数量和大小 |
-| `AMNEZIA_S1/S2` | `64` | Init/Response 填充 |
-| `AMNEZIA_H1-H4` | 见示例 | 全局包头值或范围 |
+| `AMNEZIA_S1/S2` | `103` / `21` | Init/Response 填充 |
+| `AMNEZIA_H1-H4` | `695467002`, `405207407`, `141743987`, `206219833` | 全局包头值或范围 |
 | `AMNEZIA_I1-I5` | 见示例 | 全局 CPS 表达式 |
 | `BOT_TOKEN` | 空 | `@BotFather` 生成的令牌 |
 | `ALLOWED_USERNAMES` | 空 | 不带 `@` 的允许用户名 |
