@@ -72,8 +72,8 @@ def sample_config():
             "streamSettings": {
                 "security": "reality",
                 "realitySettings": {
-                    "target": "www.google.com:443",
-                    "serverNames": ["www.google.com"],
+                    "target": "kookas.fi:443",
+                    "serverNames": ["kookas.fi"],
                     "privateKey": "PRIVATE_KEY",
                     "shortIds": ["11111111"],
                 },
@@ -97,8 +97,8 @@ class XrayManagerTest(unittest.TestCase):
             "XRAY_CONTAINER": "vpn-xray",
             "XRAY_PUBLIC_HOST": "203.0.113.10",
             "XRAY_PORT": "8443",
-            "XRAY_SERVER_NAME": "www.google.com",
-            "XRAY_FINGERPRINT": "random",
+            "XRAY_SERVER_NAME": "kookas.fi",
+            "XRAY_FINGERPRINT": "firefox",
             "XRAY_RESTART_STABILITY_SECONDS": "0",
         })
         self.manager = XrayManager(FakeDocker(self.container))
@@ -110,7 +110,7 @@ class XrayManagerTest(unittest.TestCase):
         clients = self.manager.list_clients()
 
         self.assertEqual(len(clients), 1)
-        self.assertIn("sni=www.google.com", clients[0]["link"])
+        self.assertIn("sni=kookas.fi", clients[0]["link"])
         self.assertIn("sid=11111111", clients[0]["link"])
         outbound = clients[0]["client_config"]["outbounds"][0]
         self.assertEqual(outbound["mux"]["xudpProxyUDP443"], "reject")
@@ -125,17 +125,23 @@ class XrayManagerTest(unittest.TestCase):
             "/",
         )
 
-    def test_default_fingerprint_is_random(self):
+    def test_default_reality_camouflage(self):
+        os.environ.pop("XRAY_SERVER_NAME")
         os.environ.pop("XRAY_FINGERPRINT")
         manager = XrayManager(FakeDocker(self.container))
 
         client = manager.list_clients()[0]
 
-        self.assertIn("fp=random", client["link"])
+        self.assertIn("sni=kookas.fi", client["link"])
+        self.assertIn("fp=firefox", client["link"])
         outbound = client["client_config"]["outbounds"][0]
         self.assertEqual(
+            outbound["streamSettings"]["realitySettings"]["serverName"],
+            "kookas.fi",
+        )
+        self.assertEqual(
             outbound["streamSettings"]["realitySettings"]["fingerprint"],
-            "random",
+            "firefox",
         )
 
     def test_legacy_client_link_does_not_invent_flow(self):

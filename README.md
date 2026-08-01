@@ -161,8 +161,8 @@ WG_PERSISTENT_KEEPALIVE=25
 WG_ALLOWED_IPS=
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
-XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=random
+XRAY_SERVER_NAME=kookas.fi
+XRAY_FINGERPRINT=firefox
 
 # Параметры AmneziaWG
 AMNEZIA_JC=10
@@ -207,8 +207,8 @@ docker compose up -d --build --force-recreate
 | `WG_ALLOWED_IPS` | split-маршруты | переопределение маршрутов клиента; пустое значение исключает RFC1918 |
 | `XRAY_PORT` | `8443` | внешний TCP-порт Xray Reality |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, затем `WG_HOST` | адрес, используемый в VLESS-ссылках |
-| `XRAY_SERVER_NAME` | `www.google.com` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
-| `XRAY_FINGERPRINT` | `random` | uTLS fingerprint в клиентских VLESS-профилях |
+| `XRAY_SERVER_NAME` | `kookas.fi` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
+| `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint в клиентских VLESS-профилях |
 | `AMNEZIA_JC` | `10` | количество мусорных пакетов перед handshake |
 | `AMNEZIA_JMIN` | `64` | минимальный размер мусорного пакета в байтах |
 | `AMNEZIA_JMAX` | `200` | максимальный размер мусорного пакета в байтах |
@@ -707,13 +707,13 @@ docker compose up -d --build --force-recreate wg-easy
 Xray Reality работает как резервный транспорт. Клиент должен поддерживать
 VLESS Reality и flow `xtls-rprx-vision`.
 
-Новая установка использует `www.google.com:443` как Reality target и разрешает SNI
-`www.google.com`. Для уже существующей установки бот читает
+Новая установка использует `kookas.fi:443` как Reality target и разрешает SNI
+`kookas.fi`. Для уже существующей установки бот читает
 фактический `serverNames` из `xray-config/config.json` и использует разрешённое
 значение в ссылке. Это не ломает ранее созданные подключения при обновлении
 бота.
 
-`www.google.com` является настраиваемым default, а не универсально лучшим target.
+`kookas.fi` является настраиваемым default, а не универсально лучшим target.
 Официальная рекомендация Xray — выбирать доступный TLS-сайт по возможности в
 том же ASN, что и VPS. Не меняйте `target/serverNames` у работающего сервера без
 плана обновления существующих клиентов.
@@ -721,7 +721,7 @@ VLESS Reality и flow `xtls-rprx-vision`.
 Пример генерируемой ссылки:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=random&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 Для каждого подключения бот:
@@ -906,8 +906,8 @@ WG_ALLOWED_IPS=
 
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
-XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=random
+XRAY_SERVER_NAME=kookas.fi
+XRAY_FINGERPRINT=firefox
 
 AMNEZIA_JC=10
 AMNEZIA_JMIN=64
@@ -940,8 +940,8 @@ DOCKER_COMPOSE_EXPERIMENTAL=false
 | `WG_ALLOWED_IPS` | split routes | override client routes |
 | `XRAY_PORT` | `8443` | external Xray Reality TCP port |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, then `WG_HOST` | host used in generated VLESS links |
-| `XRAY_SERVER_NAME` | `www.google.com` | default Reality SNI |
-| `XRAY_FINGERPRINT` | `random` | uTLS fingerprint |
+| `XRAY_SERVER_NAME` | `kookas.fi` | default Reality SNI |
+| `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
 | `AMNEZIA_JC/JMIN/JMAX` | see example | junk packet count and size |
 | `AMNEZIA_S1/S2` | `64` | Init and Response padding |
 | `AMNEZIA_H1-H4` | see example | global packet header values/ranges |
@@ -1065,7 +1065,7 @@ must remain reachable.
 Xray Reality is the fallback transport. Clients must support VLESS Reality and
 the `xtls-rprx-vision` flow.
 
-New installations use `www.google.com:443` as the default target and SNI. For
+New installations use `kookas.fi:443` as the default target and SNI. For
 existing installations, the bot reads the actual `serverNames` from
 `xray-config/config.json`. Choose an accessible TLS target, preferably in the
 same ASN as the VPS. Changing target/server names requires updating existing
@@ -1074,7 +1074,7 @@ clients.
 Generated links resemble:
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=random&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 For each client the bot creates a UUID and short ID, derives the public key
@@ -1223,8 +1223,8 @@ WG_ALLOWED_IPS=
 
 XRAY_PORT=8443
 XRAY_PUBLIC_HOST=
-XRAY_SERVER_NAME=www.google.com
-XRAY_FINGERPRINT=random
+XRAY_SERVER_NAME=kookas.fi
+XRAY_FINGERPRINT=firefox
 
 AMNEZIA_JC=10
 AMNEZIA_JMIN=64
@@ -1256,8 +1256,8 @@ ALLOWED_USERNAMES=your_telegram_username
 | `WG_ALLOWED_IPS` | 分流路由 | 覆盖客户端路由 |
 | `XRAY_PORT` | `8443` | Xray Reality TCP 端口 |
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`，然后 `WG_HOST` | VLESS 链接使用的主机 |
-| `XRAY_SERVER_NAME` | `www.google.com` | 默认 Reality SNI |
-| `XRAY_FINGERPRINT` | `random` | uTLS fingerprint |
+| `XRAY_SERVER_NAME` | `kookas.fi` | 默认 Reality SNI |
+| `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
 | `AMNEZIA_JC/JMIN/JMAX` | 见示例 | junk 数据包数量和大小 |
 | `AMNEZIA_S1/S2` | `64` | Init/Response 填充 |
 | `AMNEZIA_H1-H4` | 见示例 | 全局包头值或范围 |
@@ -1366,13 +1366,13 @@ NyameBox 和 NekoBox 也接受机器人随 `.conf` 一起发送的 JSON 配置�
 Xray Reality 是备用传输。客户端必须支持 VLESS Reality 和
 `xtls-rprx-vision` flow。
 
-新安装默认使用 `www.google.com:443` 作为 target 和 SNI。已有安装中，
+新安装默认使用 `kookas.fi:443` 作为 target 和 SNI。已有安装中，
 机器人会读取 `xray-config/config.json` 的实际 `serverNames`。建议选择
 可访问且尽量与 VPS 同 ASN 的 TLS 站点。修改 target/server name 后
 需要同步更新已有客户端。
 
 ```text
-vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=random&sni=www.google.com&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
+vless://UUID@SERVER_IP:8443?encryption=none&type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&sni=kookas.fi&pbk=PUBLIC_KEY&sid=SHORT_ID&spx=%2F#NAME
 ```
 
 机器人会为每个客户端创建 UUID 和 short ID，从现有私钥推导公钥，

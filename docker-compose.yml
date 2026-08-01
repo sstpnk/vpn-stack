@@ -81,8 +81,8 @@ services:
       - XRAY_PORT=${XRAY_PORT:-8443}
       - XRAY_CONFIG_PATH=/xray-config/config.json
       - XRAY_CONTAINER=vpn-xray
-      - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-www.google.com}
-      - XRAY_FINGERPRINT=${XRAY_FINGERPRINT:-random}
+      - XRAY_SERVER_NAME=${XRAY_SERVER_NAME:-kookas.fi}
+      - XRAY_FINGERPRINT=${XRAY_FINGERPRINT:-firefox}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./xray-config:/xray-config
