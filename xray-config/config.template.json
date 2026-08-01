@@ -23,15 +23,15 @@
         "realitySettings": {
           "show": false,
           "xver": 0,
-          "fingerprint": "random",
+          "fingerprint": "firefox",
           "serverNames": [
-            "www.google.com"
+            "kookas.fi"
           ],
           "privateKey": "YOUR_PRIVATE_KEY",
           "shortIds": [
             "YOUR_SHORT_ID"
           ],
-          "target": "www.google.com:443"
+          "target": "kookas.fi:443"
         }
       },
       "sniffing": {
