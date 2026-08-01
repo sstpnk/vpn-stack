@@ -73,7 +73,8 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
-      - WG_EASY_URL=http://wg-easy:51821
+      - WG_EASY_URL=${WG_EASY_URL:-https://wg-easy:51821}
+      - WG_EASY_VERIFY_TLS=${WG_EASY_VERIFY_TLS:-false}
       - WG_EASY_PASSWORD=${WG_EASY_PASSWORD}
       - PUBLIC_HOST=${PUBLIC_HOST:-}
       - WG_HOST=${WG_HOST}
