@@ -125,10 +125,22 @@ def generate_nekobox_json(conf_text: str) -> bytes:
                 ep["dns"] = v
             elif k == "MTU":
                 ep["mtu"] = int(v)
-            elif k in ("Jc", "Jmin", "Jmax", "S1", "S2"):
+            elif k in ("Jc", "Jmin", "Jmax", "S1", "S2", "S3", "S4"):
                 ep[kl] = int(v)
             elif k in ("H1", "H2", "H3", "H4", "I1", "I2", "I3", "I4", "I5"):
                 ep[kl] = v
+            elif k in (
+                "HeaderProtectionKey",
+                "ContentPaddingAddition",
+                "RekeyAfterTime",
+                "RekeyTimeout",
+                "RejectAfterTime",
+                "KeepaliveTimeout",
+                "MaxHandshakeAttempts",
+                "RandomTrailers",
+                "DisableCookies",
+            ):
+                ep[re.sub(r"(?<!^)(?=[A-Z])", "_", k).lower()] = v
 
     if peer_sec:
         peer = {}
@@ -148,7 +160,7 @@ def generate_nekobox_json(conf_text: str) -> bytes:
             elif k == "Endpoint":
                 peer["endpoint"] = v
             elif k == "PersistentKeepalive":
-                peer["persistent_keepalive"] = int(v)
+                peer["persistent_keepalive"] = v
         if peer:
             ep["peers"] = [peer]
 

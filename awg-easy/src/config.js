@@ -2,8 +2,13 @@
 
 const { release } = require('./package.json');
 
+const AWG_PROTOCOL_VERSION = (process.env.AWG_PROTOCOL_VERSION || 'legacy').trim().toLowerCase();
+const AWG_31_ENABLED = AWG_PROTOCOL_VERSION === '3.1';
+const defaultForProtocol = (legacyValue, awg31Value) => (AWG_31_ENABLED ? awg31Value : legacyValue);
+
 module.exports.CHECK_UPDATE = process.env.CHECK_UPDATE ? process.env.CHECK_UPDATE.toLowerCase() === 'true' : true;
 module.exports.RELEASE = release;
+module.exports.AWG_PROTOCOL_VERSION = AWG_PROTOCOL_VERSION;
 module.exports.PORT = process.env.PORT || '51821';
 module.exports.WEBUI_HOST = process.env.WEBUI_HOST || '0.0.0.0';
 module.exports.PASSWORD = process.env.PASSWORD;
@@ -76,12 +81,23 @@ module.exports.JMIN = process.env.JMIN || 50;
 module.exports.JMAX = process.env.JMAX || 1000;
 module.exports.S1 = process.env.S1 || 103;
 module.exports.S2 = process.env.S2 || 21;
-module.exports.H1 = process.env.H1 || '695467002';
-module.exports.H2 = process.env.H2 || '405207407';
-module.exports.H3 = process.env.H3 || '141743987';
-module.exports.H4 = process.env.H4 || '206219833';
+module.exports.S3 = process.env.S3 || 43;
+module.exports.S4 = process.env.S4 || 12;
+module.exports.H1 = process.env.H1 || defaultForProtocol('695467002', '1');
+module.exports.H2 = process.env.H2 || defaultForProtocol('405207407', '2');
+module.exports.H3 = process.env.H3 || defaultForProtocol('141743987', '3');
+module.exports.H4 = process.env.H4 || defaultForProtocol('206219833', '4');
 module.exports.I1 = process.env.I1 || '<b 0x160301>';
 module.exports.I2 = process.env.I2 || '<r 3><b 0x0303><r 32>';
 module.exports.I3 = process.env.I3 || '<b 0x00><r 5>';
 module.exports.I4 = process.env.I4 || '<r 40>';
 module.exports.I5 = process.env.I5 || '<b 0xC0000000><r 8><b 0x04><r 100>';
+module.exports.HEADER_PROTECTION_KEY = process.env.HEADER_PROTECTION_KEY || '';
+module.exports.CONTENT_PADDING_ADDITION = process.env.CONTENT_PADDING_ADDITION || '0-0';
+module.exports.REKEY_AFTER_TIME = process.env.REKEY_AFTER_TIME || '0-0';
+module.exports.REKEY_TIMEOUT = process.env.REKEY_TIMEOUT || '0-0';
+module.exports.REJECT_AFTER_TIME = process.env.REJECT_AFTER_TIME || '0-0';
+module.exports.KEEPALIVE_TIMEOUT = process.env.KEEPALIVE_TIMEOUT || '0-0';
+module.exports.MAX_HANDSHAKE_ATTEMPTS = process.env.MAX_HANDSHAKE_ATTEMPTS || '0-0';
+module.exports.RANDOM_TRAILERS = process.env.RANDOM_TRAILERS || defaultForProtocol('off', 'on');
+module.exports.DISABLE_COOKIES = process.env.DISABLE_COOKIES || 'off';
