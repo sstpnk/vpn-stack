@@ -11,6 +11,7 @@ const ServerError = require('./ServerError');
 const MASKING_PRESETS = require('./MaskingPresets');
 
 const {
+  AWG_PROTOCOL_VERSION,
   WG_PATH,
   WG_HOST,
   WG_PORT,
@@ -28,6 +29,8 @@ const {
   JMAX,
   S1,
   S2,
+  S3,
+  S4,
   H1,
   H2,
   H3,
@@ -37,6 +40,15 @@ const {
   I3,
   I4,
   I5,
+  HEADER_PROTECTION_KEY,
+  CONTENT_PADDING_ADDITION,
+  REKEY_AFTER_TIME,
+  REKEY_TIMEOUT,
+  REJECT_AFTER_TIME,
+  KEEPALIVE_TIMEOUT,
+  MAX_HANDSHAKE_ATTEMPTS,
+  RANDOM_TRAILERS,
+  DISABLE_COOKIES,
 } = require('../config');
 
 module.exports = class WireGuard {
@@ -83,6 +95,7 @@ module.exports = class WireGuard {
           debug('Configuration generated.');
         }
 
+        this.#ensureProtocolConfig(config);
         await this.__saveConfig(config);
         await Util.exec('wg-quick down wg0').catch(() => { });
         await Util.exec('wg-quick up wg0').catch((err) => {
@@ -134,6 +147,18 @@ H1 = ${config.server.h1}
 H2 = ${config.server.h2}
 H3 = ${config.server.h3}
 H4 = ${config.server.h4}
+${this.#isAwg31Config(config) ? `S3 = ${config.server.s3}
+S4 = ${config.server.s4}
+HeaderProtectionKey = ${config.server.headerProtectionKey}
+ContentPaddingAddition = ${config.server.contentPaddingAddition}
+RekeyAfterTime = ${config.server.rekeyAfterTime}
+RekeyTimeout = ${config.server.rekeyTimeout}
+RejectAfterTime = ${config.server.rejectAfterTime}
+KeepaliveTimeout = ${config.server.keepaliveTimeout}
+MaxHandshakeAttempts = ${config.server.maxHandshakeAttempts}
+RandomTrailers = ${config.server.randomTrailers}
+DisableCookies = ${config.server.disableCookies}
+` : ''}\
 `;
 
     for (const [clientId, client] of Object.entries(config.clients)) {
@@ -234,6 +259,17 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
       h2: config.server.h2,
       h3: config.server.h3,
       h4: config.server.h4,
+      s3: config.server.s3,
+      s4: config.server.s4,
+      headerProtectionKey: config.server.headerProtectionKey,
+      contentPaddingAddition: config.server.contentPaddingAddition,
+      rekeyAfterTime: config.server.rekeyAfterTime,
+      rekeyTimeout: config.server.rekeyTimeout,
+      rejectAfterTime: config.server.rejectAfterTime,
+      keepaliveTimeout: config.server.keepaliveTimeout,
+      maxHandshakeAttempts: config.server.maxHandshakeAttempts,
+      randomTrailers: config.server.randomTrailers,
+      disableCookies: config.server.disableCookies,
       i1: I1,
       i2: I2,
       i3: I3,
@@ -259,6 +295,9 @@ Jmax = ${config.server.jmax}
 # S1/S2: случайное дополнение пакетов инициализации и ответа handshake.
 S1 = ${config.server.s1}
 S2 = ${config.server.s2}
+${this.#isAwg31Config(config) ? `S3 = ${masking.s3}
+S4 = ${masking.s4}
+` : ''}\
 
 # --- Динамические заголовки пакетов ---
 # H1-H4: значения или диапазоны заголовков Init, Response, Cookie и Transport.
@@ -267,6 +306,19 @@ H1 = ${masking.h1}
 H2 = ${masking.h2}
 H3 = ${masking.h3}
 H4 = ${masking.h4}
+${this.#isAwg31Config(config) ? `
+# --- AmneziaWG 3.1 ---
+# HeaderProtectionKey должен совпадать на сервере и клиенте.
+HeaderProtectionKey = ${masking.headerProtectionKey}
+ContentPaddingAddition = ${masking.contentPaddingAddition}
+RekeyAfterTime = ${masking.rekeyAfterTime}
+RekeyTimeout = ${masking.rekeyTimeout}
+RejectAfterTime = ${masking.rejectAfterTime}
+KeepaliveTimeout = ${masking.keepaliveTimeout}
+MaxHandshakeAttempts = ${masking.maxHandshakeAttempts}
+RandomTrailers = ${masking.randomTrailers}
+DisableCookies = ${masking.disableCookies}
+` : ''}\
 
 # --- Маскировочные CPS-пакеты ---
 # I1-I5 отправляются по порядку перед реальным WireGuard handshake.
@@ -351,6 +403,29 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
 
   getMaskingPresets() {
     return MASKING_PRESETS;
+  }
+
+  #ensureProtocolConfig(config) {
+    if (!this.#isAwg31Config(config)) return;
+
+    config.server.awgProtocolVersion = '3.1';
+    config.server.s3 = config.server.s3 || S3;
+    config.server.s4 = config.server.s4 || S4;
+    config.server.headerProtectionKey = config.server.headerProtectionKey
+      || HEADER_PROTECTION_KEY
+      || crypto.randomBytes(32).toString('base64');
+    config.server.contentPaddingAddition = config.server.contentPaddingAddition || CONTENT_PADDING_ADDITION;
+    config.server.rekeyAfterTime = config.server.rekeyAfterTime || REKEY_AFTER_TIME;
+    config.server.rekeyTimeout = config.server.rekeyTimeout || REKEY_TIMEOUT;
+    config.server.rejectAfterTime = config.server.rejectAfterTime || REJECT_AFTER_TIME;
+    config.server.keepaliveTimeout = config.server.keepaliveTimeout || KEEPALIVE_TIMEOUT;
+    config.server.maxHandshakeAttempts = config.server.maxHandshakeAttempts || MAX_HANDSHAKE_ATTEMPTS;
+    config.server.randomTrailers = config.server.randomTrailers || RANDOM_TRAILERS;
+    config.server.disableCookies = config.server.disableCookies || DISABLE_COOKIES;
+  }
+
+  #isAwg31Config(config) {
+    return AWG_PROTOCOL_VERSION === '3.1' || config.server.awgProtocolVersion === '3.1';
   }
 
   #normalizeMasking({ maskingPreset, masking }) {
