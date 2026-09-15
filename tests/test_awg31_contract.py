@@ -61,6 +61,28 @@ class AmneziaWG31ContractTest(unittest.TestCase):
         self.assertIn("WG_QUICK_USERSPACE_IMPLEMENTATION=amneziawg-go", dockerfile)
         self.assertNotIn("FROM amneziavpn/amnezia-wg:latest", dockerfile)
 
+    def test_admin_create_client_form_exposes_awg31_client_masking(self):
+        app = (ROOT / "awg-easy" / "src" / "www" / "js" / "app.js").read_text(encoding="utf-8")
+        html = (ROOT / "awg-easy" / "src" / "www" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn("maskingDefaults.awgProtocolVersion === '3.1'", html)
+        self.assertNotIn("HeaderProtectionKey", html)
+
+        for field in [
+            "s3",
+            "s4",
+            "contentPaddingAddition",
+            "rekeyAfterTime",
+            "rekeyTimeout",
+            "rejectAfterTime",
+            "keepaliveTimeout",
+            "maxHandshakeAttempts",
+            "randomTrailers",
+            "disableCookies",
+        ]:
+            self.assertIn(field, app)
+            self.assertIn(field, html)
+
     def test_bot_nekobox_json_preserves_awg31_fields_and_ranges(self):
         bot = (ROOT / "bot" / "src" / "bot.py").read_text(encoding="utf-8")
 

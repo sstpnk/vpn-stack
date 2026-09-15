@@ -288,7 +288,28 @@ new Vue({
     applyMaskingProfile(profile) {
       this.clientCreateMasking = profile
         ? Object.fromEntries(
-          ['h1', 'h2', 'h3', 'h4', 'i1', 'i2', 'i3', 'i4', 'i5', 'initPacketDelay']
+          [
+            'h1',
+            'h2',
+            'h3',
+            'h4',
+            's3',
+            's4',
+            'i1',
+            'i2',
+            'i3',
+            'i4',
+            'i5',
+            'initPacketDelay',
+            'contentPaddingAddition',
+            'rekeyAfterTime',
+            'rekeyTimeout',
+            'rejectAfterTime',
+            'keepaliveTimeout',
+            'maxHandshakeAttempts',
+            'randomTrailers',
+            'disableCookies',
+          ]
             .map((key) => [key, profile[key] === undefined ? '' : profile[key]]),
         )
         : {};

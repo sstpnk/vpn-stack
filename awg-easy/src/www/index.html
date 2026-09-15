@@ -466,6 +466,44 @@
                             class="client-create-control" />
                         </label>
                       </div>
+                      <div v-if="maskingDefaults && maskingDefaults.awgProtocolVersion === '3.1'"
+                        class="client-create-section">
+                        <label class="client-create-label">{{$t("awg31Masking")}}</label>
+                        <div class="client-create-header-grid">
+                          <label v-for="key in ['s3', 's4']" :key="key"
+                            class="client-create-field">
+                            <span class="client-create-field-label">{{key.toUpperCase()}}</span>
+                            <input v-model.trim="clientCreateMasking[key]" @input="markMaskingChanged"
+                              :placeholder="key.toUpperCase()" class="client-create-control" />
+                          </label>
+                        </div>
+                        <div class="client-create-packet-list">
+                          <label v-for="key in [
+                            'contentPaddingAddition',
+                            'rekeyAfterTime',
+                            'rekeyTimeout',
+                            'rejectAfterTime',
+                            'keepaliveTimeout',
+                            'maxHandshakeAttempts',
+                          ]" :key="key" class="client-create-field">
+                            <span class="client-create-field-label">{{key}}</span>
+                            <input v-model.trim="clientCreateMasking[key]" @input="markMaskingChanged"
+                              :placeholder="maskingDefaults[key]" class="client-create-control" />
+                          </label>
+                        </div>
+                        <div class="client-create-switch-grid">
+                          <label v-for="key in ['randomTrailers', 'disableCookies']" :key="key"
+                            class="client-create-field">
+                            <span class="client-create-field-label">{{key}}</span>
+                            <select v-model="clientCreateMasking[key]" @change="markMaskingChanged"
+                              class="client-create-control">
+                              <option value="">-</option>
+                              <option value="on">on</option>
+                              <option value="off">off</option>
+                            </select>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

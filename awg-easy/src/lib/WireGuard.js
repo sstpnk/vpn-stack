@@ -451,9 +451,10 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
     const source = { ...(preset || {}), ...(masking || {}) };
     const result = {};
     const headerPattern = /^\d+(?:-\d+)?$/;
+    const switchPattern = /^(?:on|off)$/i;
     const packetPattern = /^(?:\s*<(?:b 0x[0-9a-fA-F]+|r \d+)>\s*)+$/;
 
-    for (const key of ['h1', 'h2', 'h3', 'h4']) {
+    for (const key of ['h1', 'h2', 'h3', 'h4', 's3', 's4']) {
       if (source[key] === undefined || source[key] === '') continue;
       const value = String(source[key]).trim();
       if (!headerPattern.test(value)) {
@@ -477,6 +478,31 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
         throw new ServerError('Invalid Init_Packet_Delay', 400);
       }
       result.initPacketDelay = delay;
+    }
+
+    for (const key of [
+      'contentPaddingAddition',
+      'rekeyAfterTime',
+      'rekeyTimeout',
+      'rejectAfterTime',
+      'keepaliveTimeout',
+      'maxHandshakeAttempts',
+    ]) {
+      if (source[key] === undefined || source[key] === '') continue;
+      const value = String(source[key]).trim();
+      if (!headerPattern.test(value)) {
+        throw new ServerError(`Invalid ${key}`, 400);
+      }
+      result[key] = value;
+    }
+
+    for (const key of ['randomTrailers', 'disableCookies']) {
+      if (source[key] === undefined || source[key] === '') continue;
+      const value = String(source[key]).trim().toLowerCase();
+      if (!switchPattern.test(value)) {
+        throw new ServerError(`Invalid ${key}`, 400);
+      }
+      result[key] = value;
     }
 
     return Object.keys(result).length ? result : null;
