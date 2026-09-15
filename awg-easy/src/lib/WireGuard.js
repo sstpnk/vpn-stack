@@ -406,9 +406,16 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
   }
 
   #ensureProtocolConfig(config) {
-    if (!this.#isAwg31Config(config)) return;
+    const persistedAwg31 = config.server.awgProtocolVersion === '3.1';
+    if (AWG_PROTOCOL_VERSION !== '3.1' && !persistedAwg31) return;
 
     config.server.awgProtocolVersion = '3.1';
+    if (!persistedAwg31) {
+      config.server.h1 = H1;
+      config.server.h2 = H2;
+      config.server.h3 = H3;
+      config.server.h4 = H4;
+    }
     config.server.s3 = config.server.s3 || S3;
     config.server.s4 = config.server.s4 || S4;
     config.server.headerProtectionKey = config.server.headerProtectionKey
