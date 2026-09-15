@@ -54,6 +54,13 @@ class AmneziaWG31ContractTest(unittest.TestCase):
             elif field != "HeaderProtectionKey":
                 self.assertRegex(compose, rf"{env_key}=\$\{{AMNEZIA_{env_key}:-")
 
+    def test_awg_runtime_image_is_pinned_to_31_line(self):
+        dockerfile = (ROOT / "awg-easy" / "Dockerfile").read_text(encoding="utf-8")
+
+        self.assertIn("FROM amneziavpn/amneziawg-go:3.1.20260828", dockerfile)
+        self.assertIn("WG_QUICK_USERSPACE_IMPLEMENTATION=amneziawg-go", dockerfile)
+        self.assertNotIn("FROM amneziavpn/amnezia-wg:latest", dockerfile)
+
     def test_bot_nekobox_json_preserves_awg31_fields_and_ranges(self):
         bot = (ROOT / "bot" / "src" / "bot.py").read_text(encoding="utf-8")
 
