@@ -17,7 +17,10 @@ console.log = () => {};
 const WireGuard = require('./awg-easy/src/services/WireGuard');
 
 (async () => {
-  const client = await WireGuard.createClient({ name: 'smoke' });
+  const masking = process.env.SMOKE_MASKING
+    ? JSON.parse(process.env.SMOKE_MASKING)
+    : undefined;
+  const client = await WireGuard.createClient({ name: 'smoke', masking });
   const clientConfig = await WireGuard.getClientConfiguration({ clientId: client.id });
   const serverConfig = fs.readFileSync(path.join(process.env.WG_PATH, 'wg0.conf'), 'utf8');
   const state = JSON.parse(fs.readFileSync(path.join(process.env.WG_PATH, 'wg0.json'), 'utf8'));
@@ -109,7 +112,51 @@ class AmneziaWG31GenerationSmokeTest(unittest.TestCase):
         self.assertEqual(result["state"]["server"]["h3"], "3")
         self.assertEqual(result["state"]["server"]["h4"], "4")
 
-    def _generate(self, protocol_version, initial_state=None):
+    def test_awg31_generation_uses_custom_client_protocol_masking(self):
+        result = self._generate(
+            "3.1",
+            masking={
+                "s3": "44",
+                "s4": "13",
+                "contentPaddingAddition": "12-120",
+                "rekeyAfterTime": "21-42",
+                "rekeyTimeout": "3-9",
+                "rejectAfterTime": "500-700",
+                "keepaliveTimeout": "8-12",
+                "maxHandshakeAttempts": "4-6",
+                "randomTrailers": "off",
+                "disableCookies": "on",
+                "headerProtectionKey": "client-must-not-override-server-key",
+            },
+        )
+
+        expected_client_pairs = {
+            "S3": "44",
+            "S4": "13",
+            "ContentPaddingAddition": "12-120",
+            "RekeyAfterTime": "21-42",
+            "RekeyTimeout": "3-9",
+            "RejectAfterTime": "500-700",
+            "KeepaliveTimeout": "8-12",
+            "MaxHandshakeAttempts": "4-6",
+            "RandomTrailers": "off",
+            "DisableCookies": "on",
+        }
+
+        for key, value in expected_client_pairs.items():
+            self.assertIn(f"{key} = {value}", result["clientConfig"])
+
+        self.assertIn("S3 = 43", result["serverConfig"])
+        self.assertIn("S4 = 12", result["serverConfig"])
+        self.assertIn("RandomTrailers = on", result["serverConfig"])
+
+        server_key = result["state"]["server"]["headerProtectionKey"]
+        self.assertNotEqual(server_key, "client-must-not-override-server-key")
+        self.assertIn(f"HeaderProtectionKey = {server_key}", result["clientConfig"])
+        self.assertNotIn("client-must-not-override-server-key", result["clientConfig"])
+        self.assertNotIn("headerProtectionKey", result["state"]["clients"][next(iter(result["state"]["clients"]))]["masking"])
+
+    def _generate(self, protocol_version, initial_state=None, masking=None):
         with tempfile.TemporaryDirectory() as tmpdir:
             if initial_state:
                 Path(tmpdir, "wg0.json").write_text(json.dumps(initial_state), encoding="utf-8")
@@ -122,6 +169,8 @@ class AmneziaWG31GenerationSmokeTest(unittest.TestCase):
                     "WG_DEFAULT_ADDRESS": "10.8.0.x",
                 }
             )
+            if masking is not None:
+                env["SMOKE_MASKING"] = json.dumps(masking)
             completed = subprocess.run(
                 ["node", "-e", NODE_SMOKE],
                 cwd=ROOT,
