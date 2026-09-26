@@ -59,6 +59,7 @@ class AmneziaWG31ContractTest(unittest.TestCase):
 
         self.assertIn("FROM amneziavpn/amneziawg-go:3.1.20260828", dockerfile)
         self.assertIn("WG_QUICK_USERSPACE_IMPLEMENTATION=amneziawg-go", dockerfile)
+        self.assertIn("iptables-legacy", dockerfile)
         self.assertNotIn("FROM amneziavpn/amnezia-wg:latest", dockerfile)
 
     def test_admin_create_client_form_exposes_awg31_client_masking(self):
