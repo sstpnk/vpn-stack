@@ -62,6 +62,14 @@ class AmneziaWG31ContractTest(unittest.TestCase):
         self.assertIn("iptables-legacy", dockerfile)
         self.assertNotIn("FROM amneziavpn/amnezia-wg:latest", dockerfile)
 
+    def test_awg_runtime_uses_amneziawg_config_directory(self):
+        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+        config = (ROOT / "awg-easy" / "src" / "config.js").read_text(encoding="utf-8")
+
+        self.assertIn("./data/wg-easy:/etc/amnezia/amneziawg", compose)
+        self.assertIn("process.env.WG_PATH || '/etc/amnezia/amneziawg/'", config)
+        self.assertNotIn("./data/wg-easy:/etc/wireguard", compose)
+
     def test_admin_create_client_form_exposes_awg31_client_masking(self):
         app = (ROOT / "awg-easy" / "src" / "www" / "js" / "app.js").read_text(encoding="utf-8")
         html = (ROOT / "awg-easy" / "src" / "www" / "index.html").read_text(encoding="utf-8")

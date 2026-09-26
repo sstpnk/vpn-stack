@@ -40,7 +40,7 @@ services:
       - RANDOM_TRAILERS=${AMNEZIA_RANDOM_TRAILERS:-off}
       - DISABLE_COOKIES=${AMNEZIA_DISABLE_COOKIES:-off}
     volumes:
-      - ./data/wg-easy:/etc/wireguard
+      - ./data/wg-easy:/etc/amnezia/amneziawg
     ports:
       - "${WG_PORT:-51820}:${WG_PORT:-51820}/udp"
       - "51821:51821/tcp"
