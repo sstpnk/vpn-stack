@@ -37,6 +37,7 @@ RUN apk add --no-cache \
     dpkg \
     dumb-init \
     iptables \
+    iptables-legacy \
     openssl
 
 # Generate self-signed TLS certificate for HTTPS
