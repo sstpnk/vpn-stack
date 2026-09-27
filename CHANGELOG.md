@@ -4,6 +4,32 @@ All notable changes to VPN Stack are documented in this file.
 
 The project uses semantic versioning for published releases.
 
+## [1.1.0] - 2026-09-27
+
+### Added
+
+- AmneziaWG 3.1 server-generated client configuration contract.
+- AWG 3.1 fields in generated peer configs: `S3`, `S4`,
+  `HeaderProtectionKey`, `ContentPaddingAddition`, `RekeyAfterTime`,
+  `RekeyTimeout`, `RejectAfterTime`, `KeepaliveTimeout`,
+  `MaxHandshakeAttempts`, `RandomTrailers`, and `DisableCookies`.
+- Tests for AWG API defaults, AWG 3.1 config generation, and smoke parsing.
+
+### Changed
+
+- AmneziaWG Easy now builds on `amneziavpn/amneziawg-go:3.1.20260828`.
+- Runtime AmneziaWG state is mounted at `/etc/amnezia/amneziawg`.
+- Android guidance now recommends FreedomCat for this stack.
+- The default protocol mode stays compatible with existing legacy installs;
+  AWG 3.1 is enabled with `AMNEZIA_PROTOCOL_VERSION=3.1`.
+
+### Operations
+
+- Existing `.env`, `data/wg-easy`, and `xray-config/config.json` state should
+  be preserved during upgrade.
+- Before enabling AWG 3.1 on a live server, confirm that target clients can
+  import the generated profiles.
+
 ## [1.0.1] - 2026-07-21
 
 ### Added
@@ -45,3 +71,4 @@ First public release of the complete VPN Stack distribution.
 
 [1.0.0]: https://github.com/sstpnk/vpn-stack/releases/tag/v1.0.0
 [1.0.1]: https://github.com/sstpnk/vpn-stack/releases/tag/v1.0.1
+[1.1.0]: https://github.com/sstpnk/vpn-stack/releases/tag/v1.1.0

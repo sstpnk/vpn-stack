@@ -2,7 +2,8 @@
 
 [Русский](#русский) | [English](#english) | [简体中文](#简体中文)
 
-Current release: **v1.0.1**. See [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.1.0**. See [CHANGELOG.md](CHANGELOG.md) and
+[release notes](docs/releases/v1.1.0.md).
 Current `main` builds AmneziaWG Easy on
 `amneziavpn/amneziawg-go:3.1.20260828` and can generate AmneziaWG 3.1 client
 configs when `AMNEZIA_PROTOCOL_VERSION=3.1` is enabled.
