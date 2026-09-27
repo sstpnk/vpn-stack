@@ -2,8 +2,10 @@
 
 [Русский](#русский) | [English](#english) | [简体中文](#简体中文)
 
-Current release: **v1.0.0**. See [CHANGELOG.md](CHANGELOG.md) and
-[release notes](docs/releases/v1.0.0.md).
+Current release: **v1.0.1**. See [CHANGELOG.md](CHANGELOG.md).
+Current `main` builds AmneziaWG Easy on
+`amneziavpn/amneziawg-go:3.1.20260828` and can generate AmneziaWG 3.1 client
+configs when `AMNEZIA_PROTOCOL_VERSION=3.1` is enabled.
 
 ## Русский
 
@@ -166,11 +168,14 @@ XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
 
 # Параметры AmneziaWG
+AMNEZIA_PROTOCOL_VERSION=legacy
 AMNEZIA_JC=3
 AMNEZIA_JMIN=50
 AMNEZIA_JMAX=1000
 AMNEZIA_S1=103
 AMNEZIA_S2=21
+AMNEZIA_S3=43
+AMNEZIA_S4=12
 AMNEZIA_H1=695467002
 AMNEZIA_H2=405207407
 AMNEZIA_H3=141743987
@@ -180,6 +185,15 @@ AMNEZIA_I2='<r 3><b 0x0303><r 32>'
 AMNEZIA_I3='<b 0x00><r 5>'
 AMNEZIA_I4='<r 40>'
 AMNEZIA_I5='<b 0xC0000000><r 8><b 0x04><r 100>'
+AMNEZIA_HEADER_PROTECTION_KEY=
+AMNEZIA_CONTENT_PADDING_ADDITION=0-0
+AMNEZIA_REKEY_AFTER_TIME=0-0
+AMNEZIA_REKEY_TIMEOUT=0-0
+AMNEZIA_REJECT_AFTER_TIME=0-0
+AMNEZIA_KEEPALIVE_TIMEOUT=0-0
+AMNEZIA_MAX_HANDSHAKE_ATTEMPTS=0-0
+AMNEZIA_RANDOM_TRAILERS=off
+AMNEZIA_DISABLE_COOKIES=off
 
 # Telegram-бот
 BOT_TOKEN=123456789:replace_with_botfather_token
@@ -211,12 +225,22 @@ docker compose up -d --build --force-recreate
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, затем `WG_HOST` | адрес, используемый в VLESS-ссылках |
 | `XRAY_SERVER_NAME` | `kookas.fi` | предпочтительный Reality SNI, если он разрешён серверным конфигом |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint в клиентских VLESS-профилях |
+| `AMNEZIA_PROTOCOL_VERSION` | `legacy` | формат клиентского конфига: `legacy` или `3.1`; включайте `3.1` только для совместимых клиентов |
 | `AMNEZIA_JC` | `3` | количество мусорных пакетов перед handshake |
 | `AMNEZIA_JMIN` | `50` | минимальный размер мусорного пакета в байтах |
 | `AMNEZIA_JMAX` | `1000` | максимальный размер мусорного пакета в байтах |
-| `AMNEZIA_S1`, `AMNEZIA_S2` | `103`, `21` | padding пакетов Init и Response |
+| `AMNEZIA_S1`...`AMNEZIA_S4` | `103`, `21`, `43`, `12` | padding пакетов Init, Response, Underload и Transport |
 | `AMNEZIA_H1`...`AMNEZIA_H4` | `695467002`, `405207407`, `141743987`, `206219833` | непересекающиеся диапазоны заголовков пакетов |
 | `AMNEZIA_I1`...`AMNEZIA_I5` | см. пример | CPS-пакеты с байтами и случайными фрагментами |
+| `AMNEZIA_HEADER_PROTECTION_KEY` | пусто | ключ защиты заголовков AmneziaWG 3.1; пустое значение даёт клиенту сгенерировать его |
+| `AMNEZIA_CONTENT_PADDING_ADDITION` | `0-0` | диапазон дополнительного padding содержимого AmneziaWG 3.1 |
+| `AMNEZIA_REKEY_AFTER_TIME` | `0-0` | диапазон времени до rekey в AmneziaWG 3.1 |
+| `AMNEZIA_REKEY_TIMEOUT` | `0-0` | диапазон timeout для rekey в AmneziaWG 3.1 |
+| `AMNEZIA_REJECT_AFTER_TIME` | `0-0` | диапазон времени до reject в AmneziaWG 3.1 |
+| `AMNEZIA_KEEPALIVE_TIMEOUT` | `0-0` | диапазон keepalive timeout в AmneziaWG 3.1 |
+| `AMNEZIA_MAX_HANDSHAKE_ATTEMPTS` | `0-0` | диапазон числа попыток handshake в AmneziaWG 3.1 |
+| `AMNEZIA_RANDOM_TRAILERS` | `off` | включает случайные trailers в AmneziaWG 3.1 |
+| `AMNEZIA_DISABLE_COOKIES` | `off` | отключает cookies в AmneziaWG 3.1 |
 | `BOT_TOKEN` | пусто | токен, полученный у `@BotFather` |
 | `ALLOWED_USERNAMES` | пусто | Telegram username без `@`; несколько имён через запятую |
 
@@ -230,6 +254,9 @@ peer-а внутри `wg0.json` и используются при генера�
 бот создаёт peer-ы с глобальными `H/I`, а веб-панель поддерживает per-peer
 профили. `Init_Packet_Delay` добавляется только при явном выборе профиля или
 ручном вводе. Клиентское приложение должно поддерживать эту директиву.
+Режим `AMNEZIA_PROTOCOL_VERSION=3.1` добавляет в клиентский `.conf` новые
+директивы AmneziaWG 3.1, поэтому используйте его только с клиентами, которые
+их понимают.
 
 Параметры сервера сохраняются в `data/wg-easy/wg0.json` при первом запуске.
 Если изменить `Jc`, `Jmin`, `Jmax`, `S1`, `S2` или `H1`–`H4` для уже
@@ -606,23 +633,26 @@ VeilBox предназначена для Apple Silicon.
 Можно импортировать конфигурацию по QR-коду из веб-интерфейса, но показывайте
 QR только в доверенной среде: он содержит тот же приватный ключ, что и `.conf`.
 
-## Подключение Android через NekoBox
+## Подключение Android через FreedomCat
 
-[NekoBox](https://github.com/qr243vbi/NekoBox) — форк NekoBox для Android
-на sing-box, поддерживающий VLESS Reality и AmneziaWG в одном приложении.
+[FreedomCat](https://github.com/sstpnk/freedom-cat) — рекомендуемый Android-
+клиент для этого стека. Это fork NekoBox for Android на sing-box с поддержкой
+WireGuard, legacy AmneziaWG и AmneziaWG 3.1.
 
 1. Скачайте APK со страницы
-   [Releases](https://github.com/qr243vbi/NekoBox/releases)
-   или найдите NekoBox в Google Play / F-Droid.
+   [Releases](https://github.com/sstpnk/freedom-cat/releases).
 2. Установите, откройте и нажмите `+` → **Import config from file**.
-3. Укажите полученный `.conf`. Приложение автоматически распознает AmneziaWG.
+3. Укажите полученный `.conf`. Приложение автоматически распознает WireGuard
+   или AmneziaWG.
 4. Включите туннель и подтвердите системный запрос Android на создание VPN.
 5. Для per-app маршрутизации: войдите в профиль → **Route** → **Route by app**,
    выберите приложения, которые должны идти через туннель. Остальные будут
    ходить напрямую.
 
-В NekoBox также можно импортировать JSON-конфигурацию, которую бот отправляет
-вместе с `.conf`. Это гарантирует корректную структуру для sing-box.
+FreedomCat также импортирует `.vpn`, `wireguard://`, `amneziawg://` и
+`vpn://`, включая экспорт из приложения Amnezia. JSON-конфигурация sing-box,
+которую бот отправляет вместе с `.conf`, остаётся полезной для совместимых
+NekoBox/NyameBox-клиентов.
 
 ## Проверка подключения
 
@@ -912,11 +942,14 @@ XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
 
+AMNEZIA_PROTOCOL_VERSION=legacy
 AMNEZIA_JC=3
 AMNEZIA_JMIN=50
 AMNEZIA_JMAX=1000
 AMNEZIA_S1=103
 AMNEZIA_S2=21
+AMNEZIA_S3=43
+AMNEZIA_S4=12
 AMNEZIA_H1=695467002
 AMNEZIA_H2=405207407
 AMNEZIA_H3=141743987
@@ -926,6 +959,15 @@ AMNEZIA_I2='<r 3><b 0x0303><r 32>'
 AMNEZIA_I3='<b 0x00><r 5>'
 AMNEZIA_I4='<r 40>'
 AMNEZIA_I5='<b 0xC0000000><r 8><b 0x04><r 100>'
+AMNEZIA_HEADER_PROTECTION_KEY=
+AMNEZIA_CONTENT_PADDING_ADDITION=0-0
+AMNEZIA_REKEY_AFTER_TIME=0-0
+AMNEZIA_REKEY_TIMEOUT=0-0
+AMNEZIA_REJECT_AFTER_TIME=0-0
+AMNEZIA_KEEPALIVE_TIMEOUT=0-0
+AMNEZIA_MAX_HANDSHAKE_ATTEMPTS=0-0
+AMNEZIA_RANDOM_TRAILERS=off
+AMNEZIA_DISABLE_COOKIES=off
 
 BOT_TOKEN=123456789:replace_with_botfather_token
 ALLOWED_USERNAMES=your_telegram_username
@@ -946,10 +988,20 @@ DOCKER_COMPOSE_EXPERIMENTAL=false
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`, then `WG_HOST` | host used in generated VLESS links |
 | `XRAY_SERVER_NAME` | `kookas.fi` | default Reality SNI |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
+| `AMNEZIA_PROTOCOL_VERSION` | `legacy` | client config format: `legacy` or `3.1`; use `3.1` only with compatible clients |
 | `AMNEZIA_JC/JMIN/JMAX` | see example | junk packet count and size |
-| `AMNEZIA_S1/S2` | `103` / `21` | Init and Response padding |
+| `AMNEZIA_S1-S4` | `103` / `21` / `43` / `12` | Init, Response, Underload, and Transport padding |
 | `AMNEZIA_H1-H4` | `695467002`, `405207407`, `141743987`, `206219833` | global packet header values/ranges |
 | `AMNEZIA_I1-I5` | see example | global CPS packet expressions |
+| `AMNEZIA_HEADER_PROTECTION_KEY` | empty | AmneziaWG 3.1 header protection key; empty value lets the client generate it |
+| `AMNEZIA_CONTENT_PADDING_ADDITION` | `0-0` | AmneziaWG 3.1 content padding range |
+| `AMNEZIA_REKEY_AFTER_TIME` | `0-0` | AmneziaWG 3.1 rekey-after-time range |
+| `AMNEZIA_REKEY_TIMEOUT` | `0-0` | AmneziaWG 3.1 rekey timeout range |
+| `AMNEZIA_REJECT_AFTER_TIME` | `0-0` | AmneziaWG 3.1 reject-after-time range |
+| `AMNEZIA_KEEPALIVE_TIMEOUT` | `0-0` | AmneziaWG 3.1 keepalive timeout range |
+| `AMNEZIA_MAX_HANDSHAKE_ATTEMPTS` | `0-0` | AmneziaWG 3.1 max handshake attempts range |
+| `AMNEZIA_RANDOM_TRAILERS` | `off` | enables AmneziaWG 3.1 random trailers |
+| `AMNEZIA_DISABLE_COOKIES` | `off` | disables AmneziaWG 3.1 cookies |
 | `BOT_TOKEN` | empty | token from `@BotFather` |
 | `ALLOWED_USERNAMES` | empty | allowed usernames without `@` |
 
@@ -1056,11 +1108,14 @@ recommended Mux settings.
 - **macOS**: VeilBox on Apple Silicon or
   [AmneziaWG from the App Store](https://apps.apple.com/us/app/amneziawg/id6478942365).
 - **iPhone/iPad**: import the file or scan the QR code in AmneziaWG.
-- **Android**: [NekoBox](https://github.com/qr243vbi/NekoBox)
-  — a sing-box fork supporting both VLESS Reality and AmneziaWG in one app.
+- **Android**: [FreedomCat](https://github.com/sstpnk/freedom-cat)
+  — the recommended Android client for this stack; a sing-box-based NekoBox
+  fork with WireGuard, legacy AmneziaWG, and AmneziaWG 3.1 support.
 
-NyameBox and NekoBox also accept the JSON config the bot sends alongside the
-`.conf` file, ensuring correct sing-box endpoint structure for AmneziaWG.
+FreedomCat imports `.conf`, `.vpn`, `wireguard://`, `amneziawg://`, and
+`vpn://` configs. NyameBox and compatible NekoBox clients also accept the JSON
+config the bot sends alongside the `.conf` file, ensuring correct sing-box
+endpoint structure for AmneziaWG.
 Do not enable a full-tunnel override if local printers, NAS devices, or routers
 must remain reachable.
 
@@ -1231,11 +1286,14 @@ XRAY_PUBLIC_HOST=
 XRAY_SERVER_NAME=kookas.fi
 XRAY_FINGERPRINT=firefox
 
+AMNEZIA_PROTOCOL_VERSION=legacy
 AMNEZIA_JC=3
 AMNEZIA_JMIN=50
 AMNEZIA_JMAX=1000
 AMNEZIA_S1=103
 AMNEZIA_S2=21
+AMNEZIA_S3=43
+AMNEZIA_S4=12
 AMNEZIA_H1=695467002
 AMNEZIA_H2=405207407
 AMNEZIA_H3=141743987
@@ -1245,6 +1303,15 @@ AMNEZIA_I2='<r 3><b 0x0303><r 32>'
 AMNEZIA_I3='<b 0x00><r 5>'
 AMNEZIA_I4='<r 40>'
 AMNEZIA_I5='<b 0xC0000000><r 8><b 0x04><r 100>'
+AMNEZIA_HEADER_PROTECTION_KEY=
+AMNEZIA_CONTENT_PADDING_ADDITION=0-0
+AMNEZIA_REKEY_AFTER_TIME=0-0
+AMNEZIA_REKEY_TIMEOUT=0-0
+AMNEZIA_REJECT_AFTER_TIME=0-0
+AMNEZIA_KEEPALIVE_TIMEOUT=0-0
+AMNEZIA_MAX_HANDSHAKE_ATTEMPTS=0-0
+AMNEZIA_RANDOM_TRAILERS=off
+AMNEZIA_DISABLE_COOKIES=off
 
 BOT_TOKEN=123456789:replace_with_botfather_token
 ALLOWED_USERNAMES=your_telegram_username
@@ -1264,10 +1331,20 @@ ALLOWED_USERNAMES=your_telegram_username
 | `XRAY_PUBLIC_HOST` | `PUBLIC_HOST`，然后 `WG_HOST` | VLESS 链接使用的主机 |
 | `XRAY_SERVER_NAME` | `kookas.fi` | 默认 Reality SNI |
 | `XRAY_FINGERPRINT` | `firefox` | uTLS fingerprint |
+| `AMNEZIA_PROTOCOL_VERSION` | `legacy` | 客户端配置格式：`legacy` 或 `3.1`；仅在客户端兼容时使用 `3.1` |
 | `AMNEZIA_JC/JMIN/JMAX` | 见示例 | junk 数据包数量和大小 |
-| `AMNEZIA_S1/S2` | `103` / `21` | Init/Response 填充 |
+| `AMNEZIA_S1-S4` | `103` / `21` / `43` / `12` | Init、Response、Underload 和 Transport 填充 |
 | `AMNEZIA_H1-H4` | `695467002`, `405207407`, `141743987`, `206219833` | 全局包头值或范围 |
 | `AMNEZIA_I1-I5` | 见示例 | 全局 CPS 表达式 |
+| `AMNEZIA_HEADER_PROTECTION_KEY` | 空 | AmneziaWG 3.1 头部保护密钥；空值表示由客户端生成 |
+| `AMNEZIA_CONTENT_PADDING_ADDITION` | `0-0` | AmneziaWG 3.1 内容 padding 范围 |
+| `AMNEZIA_REKEY_AFTER_TIME` | `0-0` | AmneziaWG 3.1 rekey 时间范围 |
+| `AMNEZIA_REKEY_TIMEOUT` | `0-0` | AmneziaWG 3.1 rekey timeout 范围 |
+| `AMNEZIA_REJECT_AFTER_TIME` | `0-0` | AmneziaWG 3.1 reject 时间范围 |
+| `AMNEZIA_KEEPALIVE_TIMEOUT` | `0-0` | AmneziaWG 3.1 keepalive timeout 范围 |
+| `AMNEZIA_MAX_HANDSHAKE_ATTEMPTS` | `0-0` | AmneziaWG 3.1 最大 handshake 次数范围 |
+| `AMNEZIA_RANDOM_TRAILERS` | `off` | 启用 AmneziaWG 3.1 随机 trailers |
+| `AMNEZIA_DISABLE_COOKIES` | `off` | 禁用 AmneziaWG 3.1 cookies |
 | `BOT_TOKEN` | 空 | `@BotFather` 生成的令牌 |
 | `ALLOWED_USERNAMES` | 空 | 不带 `@` 的允许用户名 |
 
@@ -1361,11 +1438,13 @@ docker compose logs -f vpn-bot
 - **macOS**：Apple Silicon 可使用 VeilBox，也可使用
   [App Store 版 AmneziaWG](https://apps.apple.com/us/app/amneziawg/id6478942365)。
 - **iPhone/iPad**：在 AmneziaWG 中导入文件或扫描二维码。
-- **Android**：[NekoBox](https://github.com/qr243vbi/NekoBox)
-  — 基于 sing-box 的 fork，支持 VLESS Reality 和 AmneziaWG。
+- **Android**：[FreedomCat](https://github.com/sstpnk/freedom-cat)
+  — 本项目推荐的 Android 客户端，基于 sing-box/NekoBox，支持 WireGuard、
+  legacy AmneziaWG 和 AmneziaWG 3.1。
 
-NyameBox 和 NekoBox 也接受机器人随 `.conf` 一起发送的 JSON 配置，
-确保 AmneziaWG 端点的 sing-box 结构正确。
+FreedomCat 可导入 `.conf`、`.vpn`、`wireguard://`、`amneziawg://` 和
+`vpn://`。NyameBox 和兼容的 NekoBox 客户端也接受机器人随 `.conf`
+一起发送的 JSON 配置，确保 AmneziaWG 端点的 sing-box 结构正确。
 
 ### Xray Reality
 

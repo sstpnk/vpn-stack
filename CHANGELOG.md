@@ -4,6 +4,17 @@ All notable changes to VPN Stack are documented in this file.
 
 The project uses semantic versioning for published releases.
 
+## [1.0.1] - 2026-07-21
+
+### Added
+
+- Self-signed HTTPS support for the AmneziaWG Easy admin panel.
+- Bot-generated NekoBox/sing-box JSON alongside AmneziaWG `.conf` files.
+
+### Changed
+
+- Client recommendations were refreshed for NyameBox/NekoBox usage.
+
 ## [1.0.0] - 2026-06-11
 
 First public release of the complete VPN Stack distribution.
@@ -33,3 +44,4 @@ First public release of the complete VPN Stack distribution.
 - Updating to this release does not require resetting VPN keys or peers.
 
 [1.0.0]: https://github.com/sstpnk/vpn-stack/releases/tag/v1.0.0
+[1.0.1]: https://github.com/sstpnk/vpn-stack/releases/tag/v1.0.1
