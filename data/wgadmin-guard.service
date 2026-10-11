@@ -1,0 +1,13 @@
+[Unit]
+Description=Restrict the AmneziaWG admin panel port to the reverse proxy
+After=docker.service network-online.target
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/wgadmin-guard.sh
+
+[Install]
+WantedBy=multi-user.target

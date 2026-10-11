@@ -72,6 +72,9 @@ ip6tables -D DOCKER-USER -j WGADMIN-GUARD && ip6tables -F WGADMIN-GUARD && ip6ta
 
 ## Related
 
+- `data/` stays ignored because it also holds generated WireGuard state, so the
+  two guard files are tracked explicitly; adding another file there needs
+  `git add -f`.
 - `wg.stpnk.tech` itself is defined in the separate `prod-router` repository,
   which owns Caddy on sagitta.
 - The files here contain no credentials, only the public proxy address and the
