@@ -14,7 +14,7 @@ Freedom Access is the working name for the connected set of projects:
 | `vpn-stack` | `C:\Users\Sergey\Code\vpn-stack` | `https://github.com/sstpnk/vpn-stack` | Server distribution: Docker Compose, Telegram bot, Xray Reality, bundled admin UI. |
 | `awg-easy` | `C:\Users\Sergey\Code\vpn-stack\awg-easy` | based on `https://github.com/spcfox/amnezia-wg-easy` | Current admin UI fork for peer creation, QR/config download, masking presets, and internal API. |
 | `freedom-cat` | `C:\Users\Sergey\Code\freedom-cat` | `https://github.com/sstpnk/freedom-cat` | Android client fork with WireGuard and AmneziaWG import/runtime support. |
-| `sing-box` fork | cloned next to `freedom-cat` by `buildScript/lib/core/get_source.sh` | `https://github.com/sstpnk/sing-box` | Client protocol core consumed by FreedomCat `libcore`. |
+| `sing-box` fork | cloned into `freedom-cat/deps/sing-box` by `buildScript/lib/core/get_source.sh` (gitignored, local-only) | `https://github.com/sstpnk/sing-box` | Client protocol core consumed by FreedomCat `libcore`. |
 | `vpn-stack-landing` | `C:\Users\Sergey\Code\vpn-stack-landing` | `https://github.com/sstpnk/vpn-stack-landing` | Public instruction/landing site for the stack and client. |
 | `prod-router` | `C:\Users\Sergey\Code\prod-router` | `https://github.com/sstpnk/prod-router` | Sagitta Caddy router for `access.stpnk.tech`, `wg.stpnk.tech`, and other production routes. |
 
@@ -66,7 +66,7 @@ FreedomCat already has a wider AmneziaWG surface than the server generator:
 | Area | Current evidence | Compatibility impact |
 | --- | --- | --- |
 | Runtime dependency | `libcore/go.mod` pins `github.com/amnezia-vpn/amneziawg-go/v3 v3.1.20260828`. | Client runtime is already on the 3.1 line. |
-| sing-box source | `buildScript/lib/core/get_source.sh` clones `sstpnk/sing-box` and checks out `COMMIT_SING_BOX=45ec5dcaf6ab0edcc0822d11c7315d8b3f90e356`. | FreedomCat depends on the forked sing-box source next to the Android repo. |
+| sing-box source | `buildScript/lib/core/get_source.sh` clones `sstpnk/sing-box` into `freedom-cat/deps/sing-box` (gitignored) and checks out `COMMIT_SING_BOX=45ec5dcaf6ab0edcc0822d11c7315d8b3f90e356`. | FreedomCat depends on the forked sing-box source inside the Android repo; re-run the script to restore `deps/` before building `libcore`. |
 | Import parser | `WireGuardFmt.kt` parses `S3`, `S4`, `HeaderProtectionKey`, `ContentPaddingAddition`, timing fields, `RandomTrailers`, `DisableCookies`, and ranged `PersistentKeepalive`. | Server-generated 3.1 configs should import without client parser work. |
 | UI | `wireguard_preferences.xml` and `WireGuardSettingsActivity.kt` expose the Amnezia 3.1 fields. | Manual editing exists on the client side. |
 | Tests | `WireGuardFmtTest.kt` includes an AWG 3.1 config fixture with the full field set. | Server contract tests should reuse the same field names and value shapes. |
