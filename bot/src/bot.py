@@ -1,3 +1,4 @@
+import asyncio
 import html
 import json
 import logging
@@ -13,7 +14,7 @@ from telegram import (
     ReplyKeyboardMarkup,
     Update,
 )
-from telegram.error import NetworkError
+from telegram.error import NetworkError, TelegramError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -809,6 +810,53 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
+# ── Polling guard ─────────────────────────────────────────────────────────────
+
+# Telegram rejects getUpdates (Conflict) while a webhook is registered for the bot,
+# and PTB removes the webhook only during its startup bootstrap. If anything sets it
+# again later, the bot silently stops receiving updates, so keep checking.
+WEBHOOK_CHECK_INTERVAL = max(60, int(os.environ.get("WEBHOOK_CHECK_INTERVAL", "300")))
+
+
+async def delete_webhook_if_set(app: Application, *, drop_pending: bool) -> None:
+    try:
+        info = await app.bot.get_webhook_info()
+    except TelegramError as exc:
+        logger.warning("Could not read webhook info: %s", exc)
+        return
+
+    if not info.url:
+        return
+
+    logger.warning("Webhook %s is set; removing it so long polling can receive updates", info.url)
+    try:
+        await app.bot.delete_webhook(drop_pending_updates=drop_pending)
+    except TelegramError as exc:
+        logger.error("Failed to delete webhook %s: %s", info.url, exc)
+
+
+async def watch_for_webhook(app: Application) -> None:
+    while True:
+        await asyncio.sleep(WEBHOOK_CHECK_INTERVAL)
+        await delete_webhook_if_set(app, drop_pending=True)
+
+
+async def on_startup(app: Application) -> None:
+    await delete_webhook_if_set(app, drop_pending=True)
+    app.bot_data["webhook_watchdog"] = asyncio.create_task(watch_for_webhook(app))
+
+
+async def on_shutdown(app: Application) -> None:
+    watchdog = app.bot_data.pop("webhook_watchdog", None)
+    if watchdog is None:
+        return
+    watchdog.cancel()
+    try:
+        await watchdog
+    except asyncio.CancelledError:
+        pass
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
@@ -821,7 +869,13 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     token = os.environ["BOT_TOKEN"]
-    app = Application.builder().token(token).build()
+    app = (
+        Application.builder()
+        .token(token)
+        .post_init(on_startup)
+        .post_shutdown(on_shutdown)
+        .build()
+    )
 
     kb_buttons = [
         "📋 AWG Peers",
